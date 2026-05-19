@@ -1,0 +1,3 @@
+.window { display: flex; flex-direction: column; height: 100%; }
+.messages { flex: 1; overflow-y: auto; }
+.input { flex-shrink: 0; }

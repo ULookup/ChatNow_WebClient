@@ -1,0 +1,21 @@
+.item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 10px;
+  border-radius: 14px; margin: 2px 0; cursor: pointer; transition: all 0.15s;
+}
+.item:hover { background: rgba(0,0,0,0.03); }
+.active {
+  background: rgba(99, 102, 241, 0.08);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+.info { flex: 1; min-width: 0; }
+.name { font-size: 12px; font-weight: 500; color: var(--text-primary); display: flex; align-items: center; gap: 4px; }
+.preview { font-size: 10px; color: var(--text-muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.time { font-size: 9px; color: var(--text-muted); }
+.badge {
+  background: rgba(239, 68, 68, 0.12); border-radius: 8px; padding: 2px 7px;
+  font-size: 10px; color: var(--danger); font-weight: 600;
+  backdrop-filter: blur(6px); border: 1px solid rgba(239, 68, 68, 0.1);
+}
+.muted { font-size: 10px; }
