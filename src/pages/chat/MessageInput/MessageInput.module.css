@@ -1,0 +1,24 @@
+.wrapper { padding: 10px 16px; flex-shrink: 0; }
+.bar {
+  display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 20px;
+  background: rgba(255,255,255,0.55); backdrop-filter: blur(20px);
+  border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.toolBtn {
+  width: 28px; height: 28px; border: none; border-radius: 6px;
+  background: transparent; cursor: pointer; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+}
+.toolBtn:hover { background: rgba(0,0,0,0.04); }
+.editor {
+  flex: 1; outline: none; font-size: 13px; color: var(--text-primary);
+  max-height: 100px; overflow-y: auto; line-height: 1.4;
+}
+.editor:empty::before { content: attr(data-placeholder); color: rgba(0,0,0,0.2); }
+.sendBtn {
+  width: 32px; height: 32px; border: none; border-radius: 50%;
+  background: var(--accent-gradient); color: #fff; cursor: pointer;
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(6px);
+}
+.sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
