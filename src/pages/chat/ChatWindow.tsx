@@ -1,5 +1,6 @@
 import { useChatStore } from '@/stores/chatStore';
 import { ChatHeader } from './ChatHeader';
+import { MessageList } from './MessageList/MessageList';
 import styles from './ChatWindow.module.css';
 
 export function ChatWindow() {
@@ -11,12 +12,7 @@ export function ChatWindow() {
   return (
     <div className={styles.window}>
       <ChatHeader conv={conv} />
-      <div className={styles.messages}>
-        {/* MessageList component will be added in Task 9 */}
-        <div style={{ padding: 16, color: 'var(--text-muted)', fontSize: 12 }}>
-          消息列表组件将在下一步实现
-        </div>
-      </div>
+      <MessageList />
       <div className={styles.input}>
         {/* MessageInput component will be added in Task 10 */}
         <div style={{ padding: '10px 16px', color: 'var(--text-muted)', fontSize: 12, textAlign: 'center' }}>
