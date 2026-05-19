@@ -38,36 +38,38 @@ export interface UserInfo {
 /**
  * @generated from protobuf enum chatnow.common.DevicePlatform
  */
-export enum DevicePlatform {
+export const DevicePlatform = {
     /**
      * @generated from protobuf enum value: DEVICE_PLATFORM_UNSPECIFIED = 0;
      */
-    DEVICE_PLATFORM_UNSPECIFIED = 0,
+    DEVICE_PLATFORM_UNSPECIFIED: 0,
     /**
      * @generated from protobuf enum value: IOS = 1;
      */
-    IOS = 1,
+    IOS: 1,
     /**
      * @generated from protobuf enum value: ANDROID = 2;
      */
-    ANDROID = 2,
+    ANDROID: 2,
     /**
      * @generated from protobuf enum value: WEB = 3;
      */
-    WEB = 3,
+    WEB: 3,
     /**
      * @generated from protobuf enum value: DESKTOP_WIN = 4;
      */
-    DESKTOP_WIN = 4,
+    DESKTOP_WIN: 4,
     /**
      * @generated from protobuf enum value: DESKTOP_MAC = 5;
      */
-    DESKTOP_MAC = 5,
+    DESKTOP_MAC: 5,
     /**
      * @generated from protobuf enum value: DESKTOP_LINUX = 6;
      */
-    DESKTOP_LINUX = 6
-}
+    DESKTOP_LINUX: 6,
+} as const;
+
+export type DevicePlatform = (typeof DevicePlatform)[keyof typeof DevicePlatform];
 // @generated message type with reflection information, may provide speed optimized methods
 class UserInfo$Type extends MessageType<UserInfo> {
     constructor() {

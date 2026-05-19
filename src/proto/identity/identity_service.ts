@@ -1630,7 +1630,7 @@ class GetMultiUserInfoRsp$Type extends MessageType<GetMultiUserInfoRsp> {
     private binaryReadMap2(map: GetMultiUserInfoRsp["usersInfo"], reader: IBinaryReader, options: BinaryReadOptions): void {
         let len = reader.uint32(), end = reader.pos + len, key: keyof GetMultiUserInfoRsp["usersInfo"] | undefined, val: GetMultiUserInfoRsp["usersInfo"][any] | undefined;
         while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
+            let [fieldNo, _wireType] = reader.tag();
             switch (fieldNo) {
                 case 1:
                     key = reader.string();
