@@ -1,0 +1,29 @@
+.page {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e8ecf1, #f5f6f8);
+}
+.card {
+  width: 400px; padding: 40px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+}
+.header { text-align: center; margin-bottom: 28px; }
+.title { font-size: 28px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+.subtitle { font-size: 13px; color: var(--text-muted); }
+.tabs { display: flex; gap: 8px; margin-bottom: 24px; background: rgba(0,0,0,0.04); border-radius: 10px; padding: 4px; }
+.tab {
+  flex: 1; padding: 8px; border: none; background: transparent;
+  border-radius: 8px; font-size: 13px; cursor: pointer;
+  color: var(--text-muted); transition: all 0.2s;
+}
+.tabActive {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  color: var(--text-primary); font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
