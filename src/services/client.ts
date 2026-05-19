@@ -50,6 +50,9 @@ export async function rpcCall<T>(options: RpcCallOptions): Promise<T> {
           headers,
           body: toBodyInit(options.requestBody),
         });
+        if (!retryRes.ok) {
+          throw new Error(`HTTP ${retryRes.status}: ${retryRes.statusText}`);
+        }
         const retryBuf = new Uint8Array(await retryRes.arrayBuffer());
         return options.responseType.fromBinary(retryBuf);
       }
