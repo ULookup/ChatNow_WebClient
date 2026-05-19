@@ -1,0 +1,73 @@
+.page {
+  padding: 24px 32px;
+}
+
+.heading {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.avatarRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.changeAvatar {
+  font-size: 12px;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.input {
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: var(--glass-border);
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px);
+  font-size: 13px;
+  outline: none;
+  color: var(--text-primary);
+}
+
+.input:focus {
+  border-color: var(--accent);
+}
+
+.saveBtn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--accent-gradient);
+  color: var(--text-inverse);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  align-self: flex-start;
+  margin-top: 8px;
+}
+
+.saveBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.message {
+  font-size: 12px;
+  color: var(--success);
+}

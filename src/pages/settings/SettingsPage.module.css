@@ -1,0 +1,40 @@
+.sidebar {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebarTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.menuItem {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all 0.15s;
+}
+
+.menuItem:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.menuItemDanger {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--danger);
+  margin-top: 12px;
+  transition: all 0.15s;
+}
+
+.menuItemDanger:hover {
+  background: rgba(239, 68, 68, 0.06);
+}
