@@ -1,0 +1,225 @@
+<h2>iOS 26 Liquid Glass 风格 — ChatNow Web</h2>
+<p class="subtitle">毛玻璃面板 + 通透底色 + 动态光影。所有面板使用 backdrop-filter 模糊，鲜艳色彩从背后透出</p>
+
+<div style="position:relative; border-radius:16px; height:440px; overflow:hidden; background: linear-gradient(135deg, #1a0533 0%, #0d1b3e 25%, #0a1628 50%, #1a0520 75%, #0d1b3e 100%);">
+
+  <!-- Animated ambient light orbs -->
+  <div style="position:absolute; top:-60px; left:10%; width:200px; height:200px; background: radial-gradient(circle, rgba(138, 43, 226, 0.35) 0%, transparent 70%); border-radius:50%; filter:blur(20px);"></div>
+  <div style="position:absolute; top:30%; right:-40px; width:250px; height:250px; background: radial-gradient(circle, rgba(0, 180, 216, 0.3) 0%, transparent 70%); border-radius:50%; filter:blur(30px);"></div>
+  <div style="position:absolute; bottom:-50px; left:30%; width:180px; height:180px; background: radial-gradient(circle, rgba(255, 100, 180, 0.25) 0%, transparent 70%); border-radius:50%; filter:blur(25px);"></div>
+
+  <!-- Main layout -->
+  <div style="position:relative;z-index:1;display:flex;height:100%;gap:1px;">
+
+    <!-- LEFT: Navigation Rail - glass -->
+    <div style="width:60px; display:flex; flex-direction:column; align-items:center; padding:16px 0; gap:14px;
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-right: 1px solid rgba(255,255,255,0.08);">
+      <div style="width:38px;height:38px;border-radius:12px;
+        background: linear-gradient(135deg, rgba(138,43,226,0.5), rgba(180,100,255,0.4));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.15);
+        display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;">💬</div>
+      <div style="width:28px;height:28px;border-radius:50%;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.06);
+        display:flex;align-items:center;justify-content:center;color:#888;font-size:13px;">👤</div>
+      <div style="width:28px;height:28px;border-radius:50%;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.06);
+        display:flex;align-items:center;justify-content:center;color:#888;font-size:13px;">⚙</div>
+      <div style="margin-top:auto;width:32px;height:32px;border-radius:50%;
+        background: linear-gradient(135deg, rgba(0,180,216,0.4), rgba(100,200,255,0.3));
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.12);"></div>
+    </div>
+
+    <!-- MIDDLE: Conversation List - glass -->
+    <div style="width:260px; display:flex; flex-direction:column;
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      border-right: 1px solid rgba(255,255,255,0.06);">
+      <!-- Search bar - glass card -->
+      <div style="padding:16px 14px 10px;">
+        <div style="padding:8px 12px; border-radius:12px; font-size:11px; color: rgba(255,255,255,0.4);
+          background: rgba(255,255,255,0.06);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid rgba(255,255,255,0.08);">🔍 搜索...</div>
+      </div>
+      <!-- Chat items -->
+      <div style="flex:1;overflow:hidden;">
+        <!-- Active chat -->
+        <div style="margin:4px 8px;padding:10px 10px;border-radius:14px;
+          background: linear-gradient(135deg, rgba(138,43,226,0.2), rgba(100,150,255,0.15));
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255,255,255,0.1);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:40px;height:40px;border-radius:12px;
+              background: linear-gradient(135deg, rgba(0,200,160,0.6), rgba(0,160,200,0.5));
+              backdrop-filter: blur(8px);
+              border: 1px solid rgba(255,255,255,0.15);"></div>
+            <div style="flex:1;">
+              <div style="color:#fff;font-size:12px;font-weight:500;">张三</div>
+              <div style="color:rgba(255,255,255,0.45);font-size:10px;margin-top:2px;">好的，明天见 👋</div>
+            </div>
+            <div style="color:rgba(255,255,255,0.3);font-size:9px;">14:32</div>
+          </div>
+        </div>
+        <!-- Other chats -->
+        <div style="margin:4px 8px;padding:10px 10px;border-radius:14px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:40px;height:40px;border-radius:12px;
+              background: linear-gradient(135deg, rgba(255,150,50,0.5), rgba(255,100,100,0.4));
+              backdrop-filter: blur(8px);
+              border: 1px solid rgba(255,255,255,0.1);"></div>
+            <div style="flex:1;">
+              <div style="color:rgba(255,255,255,0.85);font-size:12px;">产品讨论组</div>
+              <div style="color:rgba(255,255,255,0.35);font-size:10px;margin-top:2px;"><span style="color:#FF6B6B;">@了你</span></div>
+            </div>
+            <div style="background:rgba(255,80,80,0.3);border-radius:8px;padding:2px 6px;font-size:9px;color:#fff;backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.1);">3</div>
+          </div>
+        </div>
+        <div style="margin:4px 8px;padding:10px 10px;border-radius:14px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:40px;height:40px;border-radius:12px;
+              background: linear-gradient(135deg, rgba(100,150,255,0.5), rgba(138,43,226,0.4));
+              backdrop-filter: blur(8px);
+              border: 1px solid rgba(255,255,255,0.1);"></div>
+            <div style="flex:1;">
+              <div style="color:rgba(255,255,255,0.85);font-size:12px;">技术分享群</div>
+              <div style="color:rgba(255,255,255,0.35);font-size:10px;margin-top:2px;">王五：新框架发布了</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER: Chat Area - most transparent -->
+    <div style="flex:1; display:flex; flex-direction:column;
+      background: rgba(255,255,255,0.02);
+      backdrop-filter: blur(30px) saturate(140%);
+      -webkit-backdrop-filter: blur(30px) saturate(140%);">
+      <!-- Chat header - glass bar -->
+      <div style="padding:14px 16px; display:flex; align-items:center; gap:10px;
+        background: rgba(255,255,255,0.05);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-bottom: 1px solid rgba(255,255,255,0.06);">
+        <div style="width:32px;height:32px;border-radius:10px;
+          background: linear-gradient(135deg, rgba(0,200,160,0.5), rgba(0,160,200,0.4));
+          backdrop-filter: blur(6px);
+          border: 1px solid rgba(255,255,255,0.12);"></div>
+        <div style="color:#fff;font-size:13px;font-weight:500;">张三</div>
+        <div style="margin-left:auto;color:rgba(255,255,255,0.25);font-size:11px;">在线</div>
+      </div>
+      <!-- Messages -->
+      <div style="flex:1;padding:20px;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;">
+        <div style="display:flex;align-items:flex-end;gap:8px;">
+          <div style="width:26px;height:26px;border-radius:8px;flex-shrink:0;
+            background: linear-gradient(135deg, rgba(0,200,160,0.5), rgba(0,160,200,0.4));
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.1);"></div>
+          <div style="max-width:65%; padding:10px 14px; border-radius:16px 16px 16px 4px; color:rgba(255,255,255,0.95); font-size:12px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.08);">在吗？有个方案想跟你讨论一下</div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;">
+          <div style="max-width:65%; padding:10px 14px; border-radius:16px 16px 4px 16px; color:#fff; font-size:12px;
+            background: linear-gradient(135deg, rgba(138,43,226,0.5), rgba(100,150,255,0.45));
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.12);">在的，你说～</div>
+        </div>
+      </div>
+      <!-- Input bar - glass -->
+      <div style="padding:12px 16px;">
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:20px;
+          background: rgba(255,255,255,0.08);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255,255,255,0.1);">
+          <span style="color:rgba(255,255,255,0.2);font-size:14px;">😊</span>
+          <span style="color:rgba(255,255,255,0.25);font-size:12px;flex:1;">输入消息...</span>
+          <span style="color:rgba(255,255,255,0.25);font-size:14px;">📎</span>
+          <span style="color:rgba(138,43,226,0.7);font-size:14px;">📤</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Context Panel - glass -->
+    <div style="width:200px; padding:14px 10px;
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(22px) saturate(150%);
+      -webkit-backdrop-filter: blur(22px) saturate(150%);
+      border-left: 1px solid rgba(255,255,255,0.06);">
+      <div style="color:rgba(255,255,255,0.9);font-size:11px;font-weight:500;margin-bottom:12px;text-align:center;">成员 — 3</div>
+      <!-- Member items -->
+      <div style="padding:6px 8px;border-radius:10px;display:flex;align-items:center;gap:8px;
+        background: rgba(255,255,255,0.04);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.05);margin-bottom:4px;">
+        <div style="width:24px;height:24px;border-radius:8px;
+          background: linear-gradient(135deg, rgba(255,180,50,0.6), rgba(255,150,50,0.4));
+          backdrop-filter: blur(4px);
+          border: 1px solid rgba(255,255,255,0.1);"></div>
+        <div style="color:rgba(255,255,255,0.8);font-size:11px;">李四 <span style="color:#F0B132;font-size:9px;">群主</span></div>
+      </div>
+      <div style="padding:6px 8px;border-radius:10px;display:flex;align-items:center;gap:8px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.04);margin-bottom:4px;">
+        <div style="width:24px;height:24px;border-radius:8px;
+          background: linear-gradient(135deg, rgba(0,200,160,0.5), rgba(0,160,200,0.4));
+          backdrop-filter: blur(4px);
+          border: 1px solid rgba(255,255,255,0.1);"></div>
+        <div style="color:rgba(255,255,255,0.8);font-size:11px;">张三</div>
+      </div>
+      <div style="padding:6px 8px;border-radius:10px;display:flex;align-items:center;gap:8px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.04);margin-bottom:12px;">
+        <div style="width:24px;height:24px;border-radius:8px;
+          background: linear-gradient(135deg, rgba(100,150,255,0.5), rgba(138,43,226,0.4));
+          backdrop-filter: blur(4px);
+          border: 1px solid rgba(255,255,255,0.1);"></div>
+        <div style="color:rgba(255,255,255,0.8);font-size:11px;">王五</div>
+      </div>
+      <!-- Glass action buttons -->
+      <div style="padding:6px;border-radius:10px;text-align:center;font-size:10px;color:rgba(255,255,255,0.5);
+        background: rgba(255,255,255,0.05);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.06);margin-bottom:4px;">+ 添加成员</div>
+      <div style="padding:6px;border-radius:10px;text-align:center;font-size:10px;color:rgba(255,100,100,0.5);
+        background: rgba(255,255,255,0.05);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.06);">退出群聊</div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:20px; display:flex; gap:16px;">
+  <div class="pros-cons">
+    <div class="pros"><h4>优势</h4>
+      <ul>
+        <li>现代感极强，视觉层次丰富</li>
+        <li>深色底色护眼，适合长时间使用</li>
+        <li>CSS backdrop-filter 原生支持，无需额外依赖</li>
+        <li>配合动画可做出精致的交互反馈</li>
+      </ul>
+    </div>
+    <div class="cons"><h4>注意事项</h4>
+      <ul>
+        <li>backdrop-filter 在低端设备上有性能开销</li>
+        <li>需要精细控制透明度和模糊度来保持文字可读性</li>
+        <li>亮色主题下液态玻璃效果较弱</li>
+        <li>过度使用会导致视觉疲劳</li>
+      </ul>
+    </div>
+  </div>
+</div>

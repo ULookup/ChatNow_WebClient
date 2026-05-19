@@ -1,0 +1,111 @@
+<h2>信息架构 & 页面结构</h2>
+<p class="subtitle">Discord 式布局下的模块划分 — 左侧导航栏切换主模块，每个模块有自己的列表 + 详情区</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">导航栏结构</div>
+    <div class="mockup-body">
+      <div style="display:flex;height:380px;border-radius:12px;overflow:hidden;background:#f0f2f5;">
+        <!-- Nav rail -->
+        <div style="width:60px;background:rgba(255,255,255,0.45);backdrop-filter:blur(24px);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:14px;border-right:1px solid rgba(0,0,0,0.06);">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.15);display:flex;align-items:center;justify-content:center;font-size:15px;">💬</div>
+          <div style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;font-size:12px;color:#999;">👤</div>
+          <div style="width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center;font-size:12px;color:#999;">⚙</div>
+        </div>
+        <!-- Labels -->
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:28px;padding-left:28px;font-size:13px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.15);display:flex;align-items:center;justify-content:center;font-size:15px;">💬</div>
+            <div>
+              <div style="font-weight:600;color:#333;">聊天</div>
+              <div style="font-size:11px;color:#999;">会话列表 + 聊天窗口</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:center;font-size:15px;">👤</div>
+            <div>
+              <div style="color:#666;">联系人</div>
+              <div style="font-size:11px;color:#999;">好友列表 + 好友申请</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:10px;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;justify-content:center;font-size:15px;">⚙</div>
+            <div>
+              <div style="color:#666;">设置</div>
+              <div style="font-size:11px;color:#999;">个人资料 + 通用设置</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">页面树</div>
+    <div class="mockup-body">
+      <div style="font-family:monospace;font-size:11px;line-height:2.2;color:#333;padding:10px;">
+        <div style="color:#6366f1;font-size:13px;font-weight:600;margin-bottom:8px;">ChatNow Web</div>
+
+        <div style="margin-left:0;color:#6366f1;">📁 认证 (未登录态)</div>
+        <div style="margin-left:16px;color:#888;">├── 登录页</div>
+        <div style="margin-left:16px;color:#888;">├── 注册页</div>
+        <div style="margin-left:16px;color:#888;">└── 验证码发送</div>
+
+        <div style="margin-left:0;color:#6366f1;margin-top:8px;">📁 聊天 (主模块)</div>
+        <div style="margin-left:16px;color:#666;">├── 会话列表</div>
+        <div style="margin-left:16px;color:#666;">├── 聊天窗口</div>
+        <div style="margin-left:16px;color:#666;">│   ├── 消息列表</div>
+        <div style="margin-left:16px;color:#666;">│   ├── 消息输入</div>
+        <div style="margin-left:16px;color:#999;">│   ├── 表情回应</div>
+        <div style="margin-left:16px;color:#999;">│   ├── 引用回复</div>
+        <div style="margin-left:16px;color:#999;">│   ├── @提及</div>
+        <div style="margin-left:16px;color:#999;">│   └── 消息搜索</div>
+        <div style="margin-left:16px;color:#666;">├── 创建群聊</div>
+        <div style="margin-left:16px;color:#666;">└── 右侧上下文面板</div>
+        <div style="margin-left:20px;color:#999;">├── 成员列表</div>
+        <div style="margin-left:20px;color:#999;">├── 群设置</div>
+        <div style="margin-left:20px;color:#999;">└── 用户详情</div>
+
+        <div style="margin-left:0;color:#6366f1;margin-top:8px;">📁 联系人 (模块)</div>
+        <div style="margin-left:16px;color:#666;">├── 好友列表</div>
+        <div style="margin-left:16px;color:#666;">├── 好友搜索</div>
+        <div style="margin-left:16px;color:#666;">├── 添加好友</div>
+        <div style="margin-left:16px;color:#999;">├── 好友申请 (待处理)</div>
+        <div style="margin-left:16px;color:#999;">└── 屏蔽列表</div>
+
+        <div style="margin-left:0;color:#6366f1;margin-top:8px;">📁 设置 (模块)</div>
+        <div style="margin-left:16px;color:#666;">├── 个人资料</div>
+        <div style="margin-left:16px;color:#999;">├── 通用设置</div>
+        <div style="margin-left:16px;color:#999;">└── 关于/退出</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>关键设计问题</h3>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>三个模块全部在导航栏</h3>
+      <p>聊天 / 联系人 / 设置 各占一个导航图标。切换时左侧面板内容替换，布局结构不变。</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>聊天为主，联系人/设置用弹窗</h3>
+      <p>导航栏只有聊天。联系人和设置通过顶部搜索栏旁的按钮触发全屏弹窗或右侧面板展示。</p>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>导航栏只放聊天+联系人，设置放用户头像菜单</h3>
+      <p>两个主模块 + 点击自己头像弹出设置菜单。微信/Telegram 的做法，减少导航项。</p>
+    </div>
+  </div>
+</div>

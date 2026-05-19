@@ -1,0 +1,149 @@
+<h2>核心组件树</h2>
+<p class="subtitle">按布局区域划分的组件层级 — 每个组件标注了它消费的 Zustand Store 和触发的 Service 调用</p>
+
+<style>
+  .comp-tree { font-family: 'SF Mono', 'Fira Code', monospace; font-size:11.5px; line-height:2; padding:12px 16px; }
+  .comp-root { color:#6366f1; font-weight:600; }
+  .comp-page { color:#333; font-weight:600; }
+  .comp-section { color:#555; }
+  .comp-leaf { color:#888; }
+  .comp-tag { display:inline-block; padding:1px 6px; border-radius:4px; font-size:9px; margin-left:6px; font-weight:500; font-family:system-ui; }
+  .tag-store { background:rgba(16,185,129,0.12); color:#10b981; }
+  .tag-service { background:rgba(245,158,11,0.12); color:#f59e0b; }
+  .tag-ws { background:rgba(99,102,241,0.1); color:#6366f1; }
+</style>
+
+<div class="split">
+  <!-- Auth tree -->
+  <div class="mockup">
+    <div class="mockup-header">认证页面 (未登录态)</div>
+    <div class="mockup-body">
+      <div class="comp-tree">
+        <div class="comp-root">App</div>
+        <div style="padding-left:16px;" class="comp-page">├── AuthPage</div>
+        <div style="padding-left:32px;" class="comp-section">│   ├── LoginForm <span class="comp-tag tag-service">Identity</span></div>
+        <div style="padding-left:32px;" class="comp-section">│   ├── RegisterForm <span class="comp-tag tag-service">Identity</span></div>
+        <div style="padding-left:32px;" class="comp-leaf">│   └── VerifyCodeInput</div>
+        <div style="padding-left:16px;" class="comp-page">└── (登录成功 → MainLayout)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Layout tree -->
+  <div class="mockup">
+    <div class="mockup-header">主布局</div>
+    <div class="mockup-body">
+      <div class="comp-tree">
+        <div class="comp-page">MainLayout</div>
+        <div style="padding-left:16px;" class="comp-section">├── NavRail <span class="comp-tag tag-store">uiStore</span></div>
+        <div style="padding-left:32px;" class="comp-leaf">│   ├── UserAvatar (→ Profile)</div>
+        <div style="padding-left:32px;" class="comp-leaf">│   ├── NavIcon (Chat)</div>
+        <div style="padding-left:32px;" class="comp-leaf">│   ├── NavIcon (Contacts)</div>
+        <div style="padding-left:32px;" class="comp-leaf">│   └── NavIcon (Settings)</div>
+        <div style="padding-left:16px;" class="comp-section">├── LeftPanel (按模块切换)</div>
+        <div style="padding-left:16px;" class="comp-section">├── MainContent (按模块切换)</div>
+        <div style="padding-left:16px;" class="comp-leaf">└── RightPanel (上下文面板)</div>
+        <div style="padding-left:16px;" class="comp-section">└── WSManager <span class="comp-tag tag-ws">WebSocket</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:16px;"><h3>聊天模块 (核心)</h3></div>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">左侧 — 会话列表</div>
+    <div class="mockup-body">
+      <div class="comp-tree">
+        <div class="comp-section">ChatListPanel</div>
+        <div style="padding-left:16px;" class="comp-section">├── SearchBar</div>
+        <div style="padding-left:16px;" class="comp-leaf">├── ConversationList <span class="comp-tag tag-store">chatStore</span></div>
+        <div style="padding-left:32px;" class="comp-leaf">│   └── ConversationItem (×N)</div>
+        <div style="padding-left:40px;" class="comp-leaf">├── Avatar + Name</div>
+        <div style="padding-left:40px;" class="comp-leaf">├── LastMessagePreview</div>
+        <div style="padding-left:40px;" class="comp-leaf">├── UnreadBadge</div>
+        <div style="padding-left:40px;" class="comp-leaf">└── Pin/Mute Icons</div>
+        <div style="padding-left:16px;" class="comp-leaf">└── CreateGroupButton <span class="comp-tag tag-service">Conversation</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">中间 — 聊天窗口</div>
+    <div class="mockup-body">
+      <div class="comp-tree">
+        <div class="comp-section">ChatWindow</div>
+        <div style="padding-left:16px;" class="comp-leaf">├── ChatHeader <span class="comp-tag tag-store">chatStore</span></div>
+        <div style="padding-left:32px;" class="comp-leaf">│   ├── ConversationName + Status</div>
+        <div style="padding-left:32px;" class="comp-leaf">│   └── Actions (Search, Pin, ...)</div>
+        <div style="padding-left:16px;" class="comp-section">├── MessageList <span class="comp-tag tag-store">chatStore</span></div>
+        <div style="padding-left:32px;" class="comp-leaf">│   ├── VirtualScroller</div>
+        <div style="padding-left:32px;" class="comp-leaf">│   └── MessageBubble (×N)</div>
+        <div style="padding-left:40px;" class="comp-leaf">├── TextBubble</div>
+        <div style="padding-left:40px;" class="comp-leaf">├── ImageBubble</div>
+        <div style="padding-left:40px;" class="comp-leaf">├── FileBubble</div>
+        <div style="padding-left:40px;" class="comp-leaf">├── AudioBubble</div>
+        <div style="padding-left:40px;" class="comp-leaf">├── VideoBubble</div>
+        <div style="padding-left:40px;" class="comp-leaf">└── LocationBubble</div>
+        <div style="padding-left:16px;" class="comp-section">├── MessageInput <span class="comp-tag tag-service">Transmite</span></div>
+        <div style="padding-left:32px;" class="comp-leaf">│   ├── TextEditor</div>
+        <div style="padding-left:32px;" class="comp-leaf">│   ├── EmojiPicker</div>
+        <div style="padding-left:32px;" class="comp-leaf">│   ├── FileUploader <span class="comp-tag tag-service">Media</span></div>
+        <div style="padding-left:32px;" class="comp-leaf">│   └── MentionDropdown</div>
+        <div style="padding-left:16px;" class="comp-leaf">└── ReactionPicker <span class="comp-tag tag-service">Message</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:16px;"><h3>联系人模块 & 右面板</h3></div>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">联系人页面</div>
+    <div class="mockup-body">
+      <div class="comp-tree">
+        <div class="comp-section">ContactListPanel</div>
+        <div style="padding-left:16px;" class="comp-leaf">├── SearchUsersBar <span class="comp-tag tag-service">Identity</span></div>
+        <div style="padding-left:16px;" class="comp-section">├── FriendList <span class="comp-tag tag-store">contactStore</span></div>
+        <div style="padding-left:32px;" class="comp-leaf">│   └── FriendItem (×N)</div>
+        <div style="padding-left:16px;" class="comp-section">├── PendingRequests <span class="comp-tag tag-store">contactStore</span></div>
+        <div style="padding-left:16px;" class="comp-leaf">└── BlockedList <span class="comp-tag tag-store">contactStore</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">右侧上下文面板 (按场景)</div>
+    <div class="mockup-body">
+      <div class="comp-tree">
+        <div class="comp-section">ContextPanel</div>
+        <div style="padding-left:16px;" class="comp-leaf">├── GroupInfo <span class="comp-tag tag-service">Conversation</span></div>
+        <div style="padding-left:32px;" class="comp-leaf">│   ├── GroupProfile</div>
+        <div style="padding-left:32px;" class="comp-leaf">│   ├── MemberList <span class="comp-tag tag-store">presenceStore</span></div>
+        <div style="padding-left:32px;" class="comp-leaf">│   └── GroupSettings</div>
+        <div style="padding-left:16px;" class="comp-leaf">├── UserProfile <span class="comp-tag tag-service">Identity</span></div>
+        <div style="padding-left:16px;" class="comp-leaf">└── PinnedMessages <span class="comp-tag tag-service">Message</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:16px;background:rgba(255,255,255,0.5);border-radius:14px;padding:14px;backdrop-filter:blur(16px);border:1px solid rgba(0,0,0,0.06);">
+  <h3 style="margin:0 0 8px;">需要确认的最后一个决策</h3>
+  <div class="options">
+    <div class="option" data-choice="a" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>纯 CSS 手写 (CSS Modules)</h3>
+        <p>不用框架，直接用 CSS Modules 实现液态玻璃效果。完全控制每层 backdrop-filter 的参数。</p>
+      </div>
+    </div>
+    <div class="option" data-choice="b" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Tailwind CSS + 自定义 utilities</h3>
+        <p>Tailwind 做布局和基础样式，液态玻璃的 backdrop-filter 等写自定义 utility class。</p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,77 @@
+<h2>架构总览</h2>
+<p class="subtitle">基于已确定决策的整体架构草图</p>
+
+<style>
+  .arch-layer { border-radius:14px; padding:16px; margin-bottom:12px; border: 1px solid rgba(0,0,0,0.06); }
+  .arch-layer-title { font-size:13px; font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+  .arch-item { display:inline-block; padding:5px 12px; border-radius:8px; font-size:11px; margin:3px 4px; background:rgba(255,255,255,0.6); border:1px solid rgba(0,0,0,0.06); }
+</style>
+
+<!-- Decision summary -->
+<div style="background:rgba(255,255,255,0.5);border-radius:14px;padding:16px;margin-bottom:16px;backdrop-filter:blur(16px);border:1px solid rgba(0,0,0,0.06);">
+  <h3 style="margin:0 0 10px;">已确定的决策</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;">
+    <div><span style="color:#999;">框架</span> <span style="color:#333;">React 18+ / TypeScript</span></div>
+    <div><span style="color:#999;">构建</span> <span style="color:#333;">Vite</span></div>
+    <div><span style="color:#999;">协议</span> <span style="color:#333;">protobuf-ts 直接序列化</span></div>
+    <div><span style="color:#999;">状态管理</span> <span style="color:#333;">Zustand (按服务拆分)</span></div>
+    <div><span style="color:#999;">布局</span> <span style="color:#333;">Discord 式：导航栏 + 列表 + 聊天 + 上下文面板</span></div>
+    <div><span style="color:#999;">风格</span> <span style="color:#333;">iOS 26 液态玻璃 · 浅色灰白底</span></div>
+    <div><span style="color:#999;">导航</span> <span style="color:#333;">聊天 / 联系人 / 设置 三模块 + 头像入口</span></div>
+  </div>
+</div>
+
+<!-- Layer diagram -->
+<div style="background:rgba(255,255,255,0.5);border-radius:14px;padding:16px;margin-bottom:16px;backdrop-filter:blur(16px);border:1px solid rgba(0,0,0,0.06);">
+  <h3 style="margin:0 0 10px;">分层架构</h3>
+  <div style="display:flex;flex-direction:column;gap:8px;">
+    <div class="arch-layer" style="background:rgba(99,102,241,0.08);">
+      <div class="arch-layer-title"><span style="font-size:16px;">📱</span> UI 层 — React Components</div>
+      <div style="font-size:11px;color:#555;">页面组件 (Login, Chat, Contacts, Settings) · 通用组件 (MessageBubble, Avatar, InputBar, Modal, etc.)</div>
+    </div>
+    <div class="arch-layer" style="background:rgba(16,185,129,0.08);">
+      <div class="arch-layer-title"><span style="font-size:16px;">🏪</span> Store 层 — Zustand</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <div class="arch-item">authStore<span style="color:#999;margin-left:4px;">token / user / login</span></div>
+        <div class="arch-item">chatStore<span style="color:#999;margin-left:4px;">conversations / messages</span></div>
+        <div class="arch-item">contactStore<span style="color:#999;margin-left:4px;">friends / requests</span></div>
+        <div class="arch-item">presenceStore<span style="color:#999;margin-left:4px;">online status</span></div>
+        <div class="arch-item">uiStore<span style="color:#999;margin-left:4px;">sidebar / panels / modals</span></div>
+      </div>
+    </div>
+    <div class="arch-layer" style="background:rgba(245,158,11,0.08);">
+      <div class="arch-layer-title"><span style="font-size:16px;">🔌</span> Service 层 — API + WebSocket</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <div class="arch-item">IdentityService</div>
+        <div class="arch-item">RelationshipService</div>
+        <div class="arch-item">ConversationService</div>
+        <div class="arch-item">TransmiteService</div>
+        <div class="arch-item">MessageService</div>
+        <div class="arch-item">MediaService</div>
+        <div class="arch-item">PresenceService</div>
+        <div class="arch-item" style="background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.2);">WSClient<span style="color:#6366f1;margin-left:4px;">realtime push</span></div>
+      </div>
+    </div>
+    <div class="arch-layer" style="background:rgba(0,0,0,0.03);">
+      <div class="arch-layer-title"><span style="font-size:16px;">📦</span> 协议层 — Protobuf</div>
+      <div class="arch-item">.proto → protobuf-ts → TypeScript types + serialize/deserialize</div>
+    </div>
+    <div class="arch-layer" style="background:rgba(0,0,0,0.02);">
+      <div class="arch-layer-title"><span style="font-size:16px;">🌐</span> 传输层</div>
+      <span class="arch-item">HTTP/1.1 :9000<span style="color:#999;margin-left:4px;">application/x-protobuf</span></span>
+      <span class="arch-item">WebSocket :9001<span style="color:#999;margin-left:4px;">Protobuf binary frames</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- Data flow -->
+<div style="background:rgba(255,255,255,0.5);border-radius:14px;padding:16px;backdrop-filter:blur(16px);border:1px solid rgba(0,0,0,0.06);">
+  <h3 style="margin:0 0 10px;">数据流向</h3>
+  <div style="font-family:monospace;font-size:11px;line-height:1.8;color:#555;">
+    <div><span style="color:#6366f1;">用户操作</span> → Component calls → <span style="color:#f59e0b;">Service</span> → Protobuf serialize → HTTP POST → <span style="color:#999;">Gateway :9000</span></div>
+    <div style="margin:6px 0 6px 20px;">→ Response → Protobuf deserialize → <span style="color:#f59e0b;">Service</span> → <span style="color:#10b981;">Zustand Store</span> → Component re-render</div>
+    <div style="border-top:1px dashed rgba(0,0,0,0.1);margin:10px 0;"></div>
+    <div><span style="color:#6366f1;">WebSocket :9001</span> → <span style="color:#f59e0b;">WSClient</span> → NotifyMessage deserialize → <span style="color:#f59e0b;">Event Router</span></div>
+    <div style="margin:6px 0 6px 20px;">→ dispatch to → <span style="color:#10b981;">chatStore</span> / <span style="color:#10b981;">contactStore</span> / <span style="color:#10b981;">presenceStore</span> → Component re-render</div>
+  </div>
+</div>

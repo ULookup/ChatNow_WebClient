@@ -1,0 +1,130 @@
+<h2>ChatNow Web 整体布局方案</h2>
+<p class="subtitle">选择一个你更倾向的布局结构 — 决定后续所有页面的骨架</p>
+
+<div class="cards">
+  <div class="card" data-choice="telegram" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e; border-radius:12px; padding:8px; height:320px; display:flex;">
+        <!-- Left: nav rail -->
+        <div style="width:56px; background:#16162a; border-radius:8px 0 0 8px; display:flex; flex-direction:column; align-items:center; padding:12px 0; gap:10px;">
+          <div style="width:36px;height:36px;background:#6C5CE7;border-radius:10px;"></div>
+          <div style="width:22px;height:22px;background:#444;border-radius:50%;"></div>
+          <div style="width:22px;height:22px;background:#444;border-radius:50%;"></div>
+          <div style="margin-top:auto;width:28px;height:28px;background:#555;border-radius:50%;"></div>
+        </div>
+        <!-- Middle: chat list -->
+        <div style="flex:1;max-width:280px;background:#1e1e36;display:flex;flex-direction:column;">
+          <div style="padding:12px 14px;border-bottom:1px solid #2a2a44;color:#ccc;font-size:13px;font-weight:600;">ChatNow</div>
+          <div style="flex:1;overflow:hidden;padding:4px 0;">
+            <div style="padding:10px 14px;border-left:3px solid #6C5CE7;background:rgba(108,92,231,0.1);">
+              <div style="color:#fff;font-size:12px;">张三</div>
+              <div style="color:#888;font-size:10px;margin-top:2px;">好的，明天见</div>
+            </div>
+            <div style="padding:10px 14px;"><div style="color:#ccc;font-size:12px;">产品讨论组</div><div style="color:#888;font-size:10px;margin-top:2px;">李四：[图片]</div></div>
+            <div style="padding:10px 14px;"><div style="color:#ccc;font-size:12px;">王五</div><div style="color:#888;font-size:10px;margin-top:2px;">文件发你了</div></div>
+            <div style="padding:10px 14px;"><div style="color:#ccc;font-size:12px;">技术分享群</div><div style="color:#888;font-size:10px;margin-top:2px;">有人@了你</div></div>
+          </div>
+        </div>
+        <!-- Right: chat area -->
+        <div style="flex:1;background:#1a1a2e;display:flex;flex-direction:column;">
+          <div style="padding:12px 16px;border-bottom:1px solid #2a2a44;color:#fff;font-size:13px;">张三</div>
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding:16px;gap:8px;">
+            <div style="display:flex;justify-content:flex-start;"><div style="background:#2d2d50;color:#ddd;padding:8px 12px;border-radius:12px;font-size:11px;max-width:60%;">在吗？</div></div>
+            <div style="display:flex;justify-content:flex-end;"><div style="background:#6C5CE7;color:#fff;padding:8px 12px;border-radius:12px;font-size:11px;max-width:60%;">在的，你说</div></div>
+          </div>
+          <div style="padding:10px 16px;border-top:1px solid #2a2a44;">
+            <div style="background:#252545;border-radius:20px;padding:8px 14px;color:#666;font-size:11px;">输入消息...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A: 侧栏导航 (Telegram Web 风格)</h3>
+      <p>最左侧 icon 导航栏切换模块（聊天 / 联系人 / 设置），中间会话列表，右侧聊天区。<br>优势：模块独立、切换快、空间利用率高。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="wechat" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#f0f0f0; border-radius:12px; padding:8px; height:320px; display:flex;">
+        <!-- Left: chat list with header tabs -->
+        <div style="flex:1;max-width:300px;background:#fff;display:flex;flex-direction:column;border-radius:8px 0 0 8px;">
+          <div style="padding:8px 12px;display:flex;border-bottom:1px solid #e0e0e0;gap:16px;">
+            <span style="color:#07C160;font-size:12px;font-weight:600;border-bottom:2px solid #07C160;padding-bottom:4px;">聊天</span>
+            <span style="color:#999;font-size:12px;">通讯录</span>
+            <span style="color:#999;font-size:12px;">发现</span>
+          </div>
+          <div style="flex:1;overflow:hidden;">
+            <div style="padding:12px;border-bottom:1px solid #f5f5f5;display:flex;gap:10px;align-items:center;">
+              <div style="width:36px;height:36px;background:#07C160;border-radius:4px;flex-shrink:0;"></div>
+              <div><div style="font-size:12px;">张三</div><div style="color:#999;font-size:10px;">好的，明天见</div></div>
+            </div>
+            <div style="padding:12px;border-bottom:1px solid #f5f5f5;display:flex;gap:10px;align-items:center;">
+              <div style="width:36px;height:36px;background:#1989FA;border-radius:4px;flex-shrink:0;"></div>
+              <div><div style="font-size:12px;">产品讨论组</div><div style="color:#999;font-size:10px;">李四：[图片]</div></div>
+            </div>
+          </div>
+        </div>
+        <!-- Right: chat area -->
+        <div style="flex:1;background:#f5f5f5;display:flex;flex-direction:column;border-radius:0 8px 8px 0;">
+          <div style="padding:12px 16px;background:#fff;border-bottom:1px solid #e0e0e0;font-size:13px;text-align:center;">张三</div>
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding:16px;gap:8px;">
+            <div style="display:flex;justify-content:flex-start;"><div style="background:#fff;color:#333;padding:8px 12px;border-radius:8px;font-size:11px;max-width:60%;">在吗？</div></div>
+            <div style="display:flex;justify-content:flex-end;"><div style="background:#95EC69;color:#000;padding:8px 12px;border-radius:8px;font-size:11px;max-width:60%;">在的，你说</div></div>
+          </div>
+          <div style="padding:10px 16px;background:#fff;">
+            <div style="background:#f5f5f5;border-radius:6px;padding:8px 14px;color:#ccc;font-size:11px;">输入消息...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B: 顶栏 Tab 导航 (微信 Web 风格)</h3>
+      <p>左侧面板顶部 Tab 切换模块，下方是内容列表，右侧聊天区。<br>优势：用户学习成本低（接近微信桌面版体验），Tab 切换直观。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="discord" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#313338; border-radius:12px; height:320px; display:flex; overflow:hidden;">
+        <!-- Server icons -->
+        <div style="width:60px;background:#1e1f22;display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:8px;">
+          <div style="width:40px;height:40px;background:#5865F2;border-radius:12px;"></div>
+          <div style="width:32px;height:32px;background:#444;border-radius:50%;"></div>
+          <div style="width:32px;height:32px;background:#444;border-radius:50%;"></div>
+        </div>
+        <!-- Sidebar -->
+        <div style="width:200px;background:#2b2d31;display:flex;flex-direction:column;font-size:10px;">
+          <div style="padding:16px 12px 8px;color:#96989d;font-weight:600;">聊天</div>
+          <div style="padding:6px 12px;color:#dbdee1;background:#404249;"># 产品讨论组</div>
+          <div style="padding:6px 12px;color:#949cf7;"># 技术分享群</div>
+          <div style="padding:6px 12px;color:#949cf7;">📢 公告频道</div>
+          <div style="margin-top:12px;padding:12px;color:#96989d;font-weight:600;">私聊</div>
+          <div style="padding:6px 12px;color:#949cf7;display:flex;align-items:center;gap:6px;"><div style="width:20px;height:20px;background:#07C160;border-radius:50%;"></div>张三</div>
+          <div style="padding:6px 12px;color:#949cf7;display:flex;align-items:center;gap:6px;"><div style="width:20px;height:20px;background:#888;border-radius:50%;"></div>王五</div>
+        </div>
+        <!-- Main -->
+        <div style="flex:1;display:flex;flex-direction:column;">
+          <div style="padding:10px 16px;border-bottom:1px solid #3f4147;color:#fff;font-size:12px;display:flex;align-items:center;gap:6px;"># 产品讨论组</div>
+          <div style="flex:1;padding:16px;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;overflow:hidden;">
+            <div style="display:flex;align-items:flex-start;gap:8px;"><div style="width:28px;height:28px;background:#07C160;border-radius:50%;flex-shrink:0;"></div><div><div style="color:#fff;font-size:10px;">张三</div><div style="background:#3f4147;color:#dbdee1;padding:6px 10px;border-radius:8px;font-size:11px;margin-top:4px;">新版本什么时候上线？</div></div></div>
+            <div style="color:#888;font-size:9px;text-align:center;">—— 昨天 14:32 ——</div>
+          </div>
+          <div style="padding:10px 16px;">
+            <div style="background:#3f4147;border-radius:8px;padding:8px 12px;color:#6d6f78;font-size:11px;">发消息到 #产品讨论组</div>
+          </div>
+        </div>
+        <!-- Member list -->
+        <div style="width:180px;background:#2b2d31;padding:12px 8px;">
+          <div style="color:#96989d;font-size:10px;margin-bottom:8px;">成员 — 8</div>
+          <div style="padding:4px 8px;color:#dbdee1;font-size:10px;display:flex;align-items:center;gap:6px;"><div style="width:20px;height:20px;background:#F0B132;border-radius:50%;"></div>群主 李四</div>
+          <div style="padding:4px 8px;color:#949cf7;font-size:10px;display:flex;align-items:center;gap:6px;"><div style="width:20px;height:20px;background:#07C160;border-radius:50%;"></div>张三</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C: 频道+成员面板 (Discord 风格)</h3>
+      <p>左侧频道列表 + 中间聊天区 + 右侧成员面板，三层布局。<br>优势：群聊信息密度高，一眼看到成员和频道。但私聊场景有些重。</p>
+    </div>
+  </div>
+</div>
