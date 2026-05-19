@@ -3,6 +3,7 @@ import type { UserInfo } from '@/proto/common/types';
 import type { AuthTokens } from '@/proto/identity/identity_service';
 import { IdentityService } from '@/services/identity';
 import { setTokens, clearTokens, getAccessToken } from '@/utils/token';
+import { wsClient } from '@/services/ws-client';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -36,6 +37,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       userId: user.userId || null,
       userInfo: user,
     });
+    wsClient.connect();
   },
 
   clearAuth: () => {
@@ -47,6 +49,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       accessToken: null,
       refreshToken: null,
     });
+    wsClient.disconnect();
   },
 
   login: async (nickname, password, deviceId, deviceName) => {
