@@ -237,7 +237,7 @@ class DevicePresence$Type extends MessageType<DevicePresence> {
                     message.deviceId = reader.string();
                     break;
                 case /* chatnow.common.DevicePlatform platform */ 2:
-                    message.platform = reader.int32();
+                    message.platform = reader.int32() as any;
                     break;
                 case /* chatnow.presence.PresenceState state */ 3:
                     message.state = reader.int32();
@@ -553,7 +553,7 @@ class BatchGetPresenceRsp$Type extends MessageType<BatchGetPresenceRsp> {
     private binaryReadMap2(map: BatchGetPresenceRsp["presences"], reader: IBinaryReader, options: BinaryReadOptions): void {
         let len = reader.uint32(), end = reader.pos + len, key: keyof BatchGetPresenceRsp["presences"] | undefined, val: BatchGetPresenceRsp["presences"][any] | undefined;
         while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
+            let [fieldNo, _wireType] = reader.tag();
             switch (fieldNo) {
                 case 1:
                     key = reader.string();

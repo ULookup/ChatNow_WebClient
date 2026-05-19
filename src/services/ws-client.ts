@@ -1,4 +1,4 @@
-import { NotifyMessage, NotifyType, NotifyClientAuth, NotifyMsgPushAck, NotifyHeartbeat } from '@/proto/push/notify';
+import { NotifyMessage, NotifyType } from '@/proto/push/notify';
 import { PresenceState } from '@/proto/presence/presence_service';
 import { getAccessToken } from '@/utils/token';
 import { useChatStore } from '@/stores/chatStore';
@@ -7,6 +7,11 @@ import { usePresenceStore } from '@/stores/presenceStore';
 import { useAuthStore } from '@/stores/authStore';
 
 const WS_URL = 'ws://localhost:9001';
+
+/** Narrow Uint8Array for WebSocket.send() compatibility */
+function toWSSend(data: Uint8Array): Blob {
+  return data as unknown as Blob;
+}
 
 /** Map NotifyPresenceChange string state to PresenceState enum */
 function toPresenceState(state: string): PresenceState {
@@ -66,7 +71,7 @@ class WSClient {
         clientAuth: { accessToken: token, deviceId },
       },
     } as NotifyMessage;
-    this.ws?.send(NotifyMessage.toBinary(msg));
+    this.ws?.send(toWSSend(NotifyMessage.toBinary(msg)));
   }
 
   private startHeartbeat() {
@@ -81,7 +86,7 @@ class WSClient {
           },
         },
       } as NotifyMessage;
-      this.ws?.send(NotifyMessage.toBinary(hb));
+      this.ws?.send(toWSSend(NotifyMessage.toBinary(hb)));
     }, 30000);
   }
 
@@ -171,7 +176,7 @@ class WSClient {
         },
       },
     } as NotifyMessage;
-    this.ws?.send(NotifyMessage.toBinary(ack));
+    this.ws?.send(toWSSend(NotifyMessage.toBinary(ack)));
   }
 
   private scheduleReconnect() {
