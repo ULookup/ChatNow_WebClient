@@ -1,0 +1,21 @@
+.rail {
+  width: 64px; display: flex; flex-direction: column; align-items: center;
+  padding: 16px 0; gap: 14px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+}
+.topSection { margin-bottom: 8px; }
+.navItems { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; }
+.navIcon {
+  width: 40px; height: 40px; border-radius: 12px; border: none;
+  background: rgba(0,0,0,0.04); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.navIcon:hover { background: rgba(99, 102, 241, 0.08); }
+.active {
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+}

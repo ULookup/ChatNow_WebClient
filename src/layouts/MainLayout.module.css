@@ -1,0 +1,24 @@
+.layout {
+  display: flex; height: 100vh; overflow: hidden;
+}
+.leftPanel {
+  width: 280px; flex-shrink: 0; display: flex; flex-direction: column;
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(28px) saturate(130%);
+  -webkit-backdrop-filter: blur(28px) saturate(130%);
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+}
+.mainContent {
+  flex: 1; display: flex; flex-direction: column; min-width: 0;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(32px) saturate(120%);
+  -webkit-backdrop-filter: blur(32px) saturate(120%);
+}
+.rightPanel {
+  width: 240px; flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(24px) saturate(130%);
+  -webkit-backdrop-filter: blur(24px) saturate(130%);
+  border-left: 1px solid rgba(0, 0, 0, 0.05);
+  overflow-y: auto;
+}
