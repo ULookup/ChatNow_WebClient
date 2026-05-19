@@ -14,6 +14,8 @@ import {
   MarkReadRsp,
   SaveDraftReq,
   SaveDraftRsp,
+  ListMembersReq,
+  ListMembersRsp,
 } from '@/proto/conversation/conversation_service';
 
 /**
@@ -78,5 +80,13 @@ export const ConversationService = {
       auth: 'JWT_REQUIRED',
       requestBody: SaveDraftReq.toBinary(req),
       responseType: SaveDraftRsp,
+    }),
+
+  listMembers: (req: ListMembersReq) =>
+    rpcCall<ListMembersRsp>({
+      path: '/service/conversation/list_members',
+      auth: 'JWT_REQUIRED',
+      requestBody: ListMembersReq.toBinary(req),
+      responseType: ListMembersRsp,
     }),
 };
