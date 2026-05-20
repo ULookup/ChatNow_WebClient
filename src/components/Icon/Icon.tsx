@@ -23,7 +23,8 @@ export type IconName =
   | 'forward'
   | 'rotate-ccw'
   | 'panel-right'
-  | 'file-stack';
+  | 'file-stack'
+  | 'arrow-down';
 
 interface IconProps {
   name: IconName;
@@ -217,6 +218,12 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
       <path d="M9 2h7l4 4v12a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z" />
       <path d="M15 2v5h5" />
       <path d="M5 6H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1" />
+    </>
+  ),
+  'arrow-down': (
+    <>
+      <path d="M12 5v14" />
+      <path d="m19 12-7 7-7-7" />
     </>
   ),
 };

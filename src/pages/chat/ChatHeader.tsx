@@ -4,9 +4,13 @@ import { Icon, IconButton } from '@/components/Icon/Icon';
 import { useUIStore } from '@/stores/uiStore';
 import styles from './ChatHeader.module.css';
 
-interface Props { conv: Conversation; }
+interface Props {
+  conv: Conversation;
+  searchActive?: boolean;
+  onToggleSearch?: () => void;
+}
 
-export function ChatHeader({ conv }: Props) {
+export function ChatHeader({ conv, searchActive = false, onToggleSearch }: Props) {
   const openRightPanel = useUIStore(s => s.openRightPanel);
   const memberLabel = conv.memberCount > 0 ? `${conv.memberCount} 位成员` : '私密会话';
 
@@ -22,7 +26,13 @@ export function ChatHeader({ conv }: Props) {
         <div className={styles.meta}>{memberLabel}</div>
       </div>
       <div className={styles.actions}>
-        <IconButton icon="search" label="搜索消息" className={styles.actionBtn} />
+        <IconButton
+          icon="search"
+          label="搜索消息"
+          active={searchActive}
+          className={styles.actionBtn}
+          onClick={onToggleSearch}
+        />
         <IconButton
           icon="panel-right"
           label="查看会话详情"

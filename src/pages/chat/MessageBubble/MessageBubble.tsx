@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { IconButton } from '@/components/Icon/Icon';
 import { getMessageTextPreview } from '../messageComposer';
+import { formatMessageClock, getMessageSenderLabel } from '../messagePresentation';
 import { TextBubble } from './TextBubble';
 import { ImageBubble } from './ImageBubble';
 import { FileBubble } from './FileBubble';
@@ -15,11 +16,13 @@ import styles from './MessageBubble.module.css';
 
 interface Props {
   message: Message;
+  searchQuery?: string;
 }
 
-export function MessageBubble({ message }: Props) {
+export function MessageBubble({ message, searchQuery = '' }: Props) {
   const userId = useAuthStore((s) => s.userId);
   const setReplyTarget = useUIStore((s) => s.setReplyTarget);
+  const addToast = useUIStore((s) => s.addToast);
   const isSelf = message.senderId === userId;
   const deliveryState = getDeliveryState(message);
   const isRecalled = message.status === MessageStatus.RECALLED;
@@ -43,10 +46,26 @@ export function MessageBubble({ message }: Props) {
   }
 
   const content = message.content;
+  const messageTime = formatMessageClock(message.createdAtMs);
+  const handleCopy = async () => {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(getMessageTextPreview(message));
+      addToast('消息已复制', 'success');
+    } catch {
+      addToast('复制失败，请重试', 'error');
+    }
+  };
 
   return (
     <div className={containerClass}>
       <div className={styles.stack}>
+        {!isSelf && (
+          <div className={styles.senderMeta}>
+            <span>{getMessageSenderLabel(message.senderId)}</span>
+            <time>{messageTime}</time>
+          </div>
+        )}
         <div
           className={`${styles.bubble} ${isSelf ? styles.bubbleSelf : styles.bubbleOther}`}
         >
@@ -56,9 +75,25 @@ export function MessageBubble({ message }: Props) {
               <strong>{message.replyTo.contentPreview}</strong>
             </div>
           )}
-          {renderBody(content)}
+          {renderBody(content, searchQuery)}
         </div>
+        {message.reactions.length > 0 && (
+          <div className={`${styles.reactions} ${isSelf ? styles.reactionsSelf : ''}`}>
+            {message.reactions.map((reaction) => (
+              <button
+                key={reaction.emoji}
+                type="button"
+                className={`${styles.reaction} ${reaction.selfReacted ? styles.reactionActive : ''}`}
+                aria-label={`${reaction.emoji} 表情回应，${reaction.count} 次`}
+              >
+                <span>{reaction.emoji}</span>
+                <strong>{reaction.count}</strong>
+              </button>
+            ))}
+          </div>
+        )}
         <div className={`${styles.messageMeta} ${isSelf ? styles.metaSelf : ''}`}>
+          {isSelf && <time>{messageTime}</time>}
           {isSelf && <MessageStatusIndicator status={message.status} deliveryState={deliveryState} />}
         </div>
         <div className={`${styles.actions} ${isSelf ? styles.actionsSelf : ''}`}>
@@ -73,7 +108,7 @@ export function MessageBubble({ message }: Props) {
               preview: getMessageTextPreview(message),
             })}
           />
-          <IconButton icon="copy" label="复制消息" className={styles.actionBtn} />
+          <IconButton icon="copy" label="复制消息" className={styles.actionBtn} onClick={handleCopy} />
           <IconButton icon="forward" label="转发消息" className={styles.actionBtn} />
           {isSelf && <IconButton icon="rotate-ccw" label="撤回消息" className={styles.actionBtn} />}
         </div>
@@ -88,7 +123,7 @@ function getDeliveryState(message: Message): DeliveryState {
   return 'sent';
 }
 
-function renderBody(content: MessageContent | undefined): React.ReactElement {
+function renderBody(content: MessageContent | undefined, searchQuery: string): React.ReactElement {
   const body = content?.body;
 
   if (!body || body.oneofKind === undefined) {
@@ -97,7 +132,7 @@ function renderBody(content: MessageContent | undefined): React.ReactElement {
 
   switch (body.oneofKind) {
     case 'text':
-      return <TextBubble text={body.text.text} />;
+      return <TextBubble text={body.text.text} highlight={searchQuery} />;
     case 'image':
       return (
         <ImageBubble

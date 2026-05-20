@@ -98,8 +98,18 @@ function seedPreviewData() {
 
   const messages: Message[] = [
     createPreviewMessage(1n, 'preview-product', 'u-2', '这版主界面保留四栏结构，但按钮状态更清楚。', now - 600000n, 1n),
-    createPreviewMessage(2n, 'preview-product', 'preview-user', '我想重点看看按钮 hover、按压和发送按钮的光扫。', now - 420000n, 2n),
-    createPreviewMessage(3n, 'preview-product', 'u-3', '可以，左侧会话、顶部操作和输入栏都已经有动效。', now - 180000n, 3n),
+    {
+      ...createPreviewMessage(2n, 'preview-product', 'preview-user', '我想重点看看按钮 hover、按压和发送按钮的光扫。', now - 420000n, 2n),
+      reactions: [
+        { emoji: '👍', count: 3, recentUserIds: ['preview-user', 'u-2', 'u-3'], selfReacted: true },
+      ],
+    },
+    {
+      ...createPreviewMessage(3n, 'preview-product', 'u-3', '可以，左侧会话、顶部操作和输入栏都已经有动效。', now - 180000n, 3n),
+      reactions: [
+        { emoji: '✨', count: 2, recentUserIds: ['preview-user', 'u-2'], selfReacted: false },
+      ],
+    },
   ];
 
   useAuthStore.setState({
@@ -124,7 +134,7 @@ function seedPreviewData() {
     lastReadSeq: { 'preview-product': 2, 'preview-design': 12 },
     loading: false,
   });
-  useUIStore.setState({ rightPanelOpen: true, rightPanelType: 'group_info' });
+  useUIStore.setState({ rightPanelOpen: false, rightPanelType: 'group_info' });
 }
 
 function createPreviewMessage(
