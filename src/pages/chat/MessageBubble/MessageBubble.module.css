@@ -1,6 +1,27 @@
-.container { display: flex; padding: 6px 0; }
+.container {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 6px 0;
+}
 .self { justify-content: flex-end; }
 .other { justify-content: flex-start; }
+
+.avatarSlot {
+  align-self: flex-end;
+  padding-bottom: 18px;
+}
+
+.avatarSlot [role='button'] {
+  transition:
+    transform var(--motion-spring),
+    box-shadow var(--motion-fast);
+}
+
+.avatarSlot [role='button']:hover {
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 10px 22px rgba(31, 43, 61, 0.12);
+}
 
 .stack {
   position: relative;
@@ -154,6 +175,46 @@
   font-size: 11px;
 }
 
+.reactionTray {
+  position: absolute;
+  top: -58px;
+  left: 8px;
+  z-index: 4;
+  display: inline-flex;
+  gap: 5px;
+  padding: 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 16px 34px rgba(31, 43, 61, 0.14);
+  animation: reactionTrayIn var(--motion-fast) both;
+}
+
+.reactionTraySelf {
+  left: auto;
+  right: 8px;
+}
+
+.reactionTray button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font-size: 17px;
+  cursor: pointer;
+  transition:
+    transform var(--motion-fast),
+    background var(--motion-fast);
+}
+
+.reactionTray button:hover {
+  background: rgba(48, 112, 255, 0.08);
+  transform: translateY(-2px) scale(1.08);
+}
+
 .searchMark {
   padding: 0 2px;
   border-radius: 4px;
@@ -231,4 +292,15 @@
 .actionBtn {
   --icon-button-size: 28px;
   border-radius: 8px;
+}
+
+@keyframes reactionTrayIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }

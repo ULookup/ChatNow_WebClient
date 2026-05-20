@@ -9,6 +9,13 @@ export interface ReplyTarget {
   preview: string;
 }
 
+export interface SelectedUserProfile {
+  userId: string;
+  nickname: string;
+  avatarUrl: string;
+  bio: string;
+}
+
 interface Toast {
   id: string;
   message: string;
@@ -20,11 +27,13 @@ interface UIState {
   rightPanelOpen: boolean;
   rightPanelType: RightPanelType;
   replyTarget: ReplyTarget | null;
+  selectedUserProfile: SelectedUserProfile | null;
   toasts: Toast[];
 
   switchModule: (m: Module) => void;
   openRightPanel: (type: RightPanelType) => void;
   closeRightPanel: () => void;
+  setSelectedUserProfile: (profile: SelectedUserProfile) => void;
   setReplyTarget: (target: ReplyTarget) => void;
   clearReplyTarget: () => void;
   addToast: (message: string, type?: 'info' | 'error' | 'success') => void;
@@ -36,12 +45,14 @@ export const useUIStore = create<UIState>((set) => ({
   rightPanelOpen: false,
   rightPanelType: null,
   replyTarget: null,
+  selectedUserProfile: null,
   toasts: [],
 
   switchModule: (m) => set({ activeModule: m }),
 
   openRightPanel: (type) => set({ rightPanelOpen: true, rightPanelType: type }),
   closeRightPanel: () => set({ rightPanelOpen: false, rightPanelType: null }),
+  setSelectedUserProfile: (profile) => set({ selectedUserProfile: profile }),
   setReplyTarget: (target) => set({ replyTarget: target }),
   clearReplyTarget: () => set({ replyTarget: null }),
 

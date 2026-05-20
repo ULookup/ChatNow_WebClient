@@ -6,6 +6,7 @@ interface Props {
   size?: number;
   gradient?: string;
   onClick?: () => void;
+  ariaLabel?: string;
 }
 
 const GRADIENTS = [
@@ -22,7 +23,7 @@ function hashGradient(str: string): string {
   return GRADIENTS[Math.abs(hash) % GRADIENTS.length];
 }
 
-export function Avatar({ url, name, size = 36, gradient, onClick }: Props) {
+export function Avatar({ url, name, size = 36, gradient, onClick, ariaLabel }: Props) {
   const bg = gradient || (name ? hashGradient(name) : GRADIENTS[0]);
   return (
     <div
@@ -34,8 +35,14 @@ export function Avatar({ url, name, size = 36, gradient, onClick }: Props) {
       }}
       onClick={onClick}
       role={onClick ? 'button' : undefined}
+      aria-label={onClick ? (ariaLabel ?? name) : undefined}
       tabIndex={onClick ? 0 : undefined}
-      onKeyDown={onClick ? (e) => { if (e.key === 'Enter') onClick(); } : undefined}
+      onKeyDown={onClick ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      } : undefined}
     >
       {!url && name && (
         <span className={styles.initials} style={{ fontSize: size * 0.35 }}>

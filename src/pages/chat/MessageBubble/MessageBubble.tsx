@@ -1,10 +1,12 @@
-import type { Message, MessageContent } from '@/proto/message/message_types';
+import { useMemo, useState } from 'react';
+import type { Message, MessageContent, ReactionGroup } from '@/proto/message/message_types';
 import { MessageStatus } from '@/proto/message/message_types';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
+import { Avatar } from '@/components/Avatar/Avatar';
 import { IconButton } from '@/components/Icon/Icon';
 import { getMessageTextPreview } from '../messageComposer';
-import { formatMessageClock, getMessageSenderLabel } from '../messagePresentation';
+import { formatMessageClock, getMessageSenderLabel, getMessageSenderProfile } from '../messagePresentation';
 import { TextBubble } from './TextBubble';
 import { ImageBubble } from './ImageBubble';
 import { FileBubble } from './FileBubble';
@@ -14,6 +16,8 @@ import { LocationBubble } from './LocationBubble';
 import { MessageStatusIndicator, type DeliveryState } from './MessageStatusIndicator';
 import styles from './MessageBubble.module.css';
 
+const QUICK_REACTIONS = ['👍', '❤️', '😂', '🎉', '✨', '👀'];
+
 interface Props {
   message: Message;
   searchQuery?: string;
@@ -22,12 +26,20 @@ interface Props {
 export function MessageBubble({ message, searchQuery = '' }: Props) {
   const userId = useAuthStore((s) => s.userId);
   const setReplyTarget = useUIStore((s) => s.setReplyTarget);
+  const openRightPanel = useUIStore((s) => s.openRightPanel);
+  const setSelectedUserProfile = useUIStore((s) => s.setSelectedUserProfile);
   const addToast = useUIStore((s) => s.addToast);
   const isSelf = message.senderId === userId;
   const deliveryState = getDeliveryState(message);
   const isRecalled = message.status === MessageStatus.RECALLED;
   const isDeleted = message.status === MessageStatus.DELETED;
   const containerClass = `${styles.container} ${isSelf ? styles.self : styles.other}`;
+  const [reactionTrayOpen, setReactionTrayOpen] = useState(false);
+  const [reactionOverrides, setReactionOverrides] = useState<Record<string, ReactionGroup>>({});
+  const reactionGroups = useMemo(
+    () => mergeReactionGroups(message.reactions, Object.values(reactionOverrides)),
+    [message.reactions, reactionOverrides],
+  );
 
   if (isRecalled) {
     return (
@@ -47,6 +59,11 @@ export function MessageBubble({ message, searchQuery = '' }: Props) {
 
   const content = message.content;
   const messageTime = formatMessageClock(message.createdAtMs);
+  const senderProfile = getMessageSenderProfile(message.senderId);
+  const openSenderProfile = () => {
+    setSelectedUserProfile(senderProfile);
+    openRightPanel('user_profile');
+  };
   const handleCopy = async () => {
     try {
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
@@ -56,9 +73,57 @@ export function MessageBubble({ message, searchQuery = '' }: Props) {
       addToast('复制失败，请重试', 'error');
     }
   };
+  const addReaction = (emoji: string) => {
+    setReactionOverrides((overrides) => {
+      const current = getCurrentReaction(message.reactions, overrides, emoji);
+      if (current?.selfReacted) return overrides;
+
+      return {
+        ...overrides,
+        [emoji]: {
+          emoji,
+          count: (current?.count ?? 0) + 1,
+          recentUserIds: addUserId(current?.recentUserIds ?? [], userId),
+          selfReacted: true,
+        },
+      };
+    });
+    setReactionTrayOpen(false);
+  };
+  const toggleReaction = (emoji: string) => {
+    setReactionOverrides((overrides) => {
+      const current = getCurrentReaction(message.reactions, overrides, emoji);
+      if (!current) return overrides;
+
+      const selfReacted = !current.selfReacted;
+      const count = current.count + (selfReacted ? 1 : -1);
+      return {
+        ...overrides,
+        [emoji]: {
+          ...current,
+          count,
+          recentUserIds: selfReacted
+            ? addUserId(current.recentUserIds, userId)
+            : removeUserId(current.recentUserIds, userId),
+          selfReacted,
+        },
+      };
+    });
+  };
 
   return (
     <div className={containerClass}>
+      {!isSelf && (
+        <div className={styles.avatarSlot}>
+          <Avatar
+            name={senderProfile.nickname}
+            url={senderProfile.avatarUrl || undefined}
+            size={34}
+            ariaLabel={`查看 ${senderProfile.nickname} 的资料`}
+            onClick={openSenderProfile}
+          />
+        </div>
+      )}
       <div className={styles.stack}>
         {!isSelf && (
           <div className={styles.senderMeta}>
@@ -77,14 +142,15 @@ export function MessageBubble({ message, searchQuery = '' }: Props) {
           )}
           {renderBody(content, searchQuery)}
         </div>
-        {message.reactions.length > 0 && (
+        {reactionGroups.length > 0 && (
           <div className={`${styles.reactions} ${isSelf ? styles.reactionsSelf : ''}`}>
-            {message.reactions.map((reaction) => (
+            {reactionGroups.map((reaction) => (
               <button
                 key={reaction.emoji}
                 type="button"
                 className={`${styles.reaction} ${reaction.selfReacted ? styles.reactionActive : ''}`}
                 aria-label={`${reaction.emoji} 表情回应，${reaction.count} 次`}
+                onClick={() => toggleReaction(reaction.emoji)}
               >
                 <span>{reaction.emoji}</span>
                 <strong>{reaction.count}</strong>
@@ -96,8 +162,28 @@ export function MessageBubble({ message, searchQuery = '' }: Props) {
           {isSelf && <time>{messageTime}</time>}
           {isSelf && <MessageStatusIndicator status={message.status} deliveryState={deliveryState} />}
         </div>
+        {reactionTrayOpen && (
+          <div className={`${styles.reactionTray} ${isSelf ? styles.reactionTraySelf : ''}`}>
+            {QUICK_REACTIONS.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                aria-label={`用 ${emoji} 回应`}
+                onClick={() => addReaction(emoji)}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
         <div className={`${styles.actions} ${isSelf ? styles.actionsSelf : ''}`}>
-          <IconButton icon="smile" label="添加表情回应" className={styles.actionBtn} />
+          <IconButton
+            icon="smile"
+            label="添加表情回应"
+            active={reactionTrayOpen}
+            className={styles.actionBtn}
+            onClick={() => setReactionTrayOpen((open) => !open)}
+          />
           <IconButton
             icon="reply"
             label="回复消息"
@@ -113,8 +199,51 @@ export function MessageBubble({ message, searchQuery = '' }: Props) {
           {isSelf && <IconButton icon="rotate-ccw" label="撤回消息" className={styles.actionBtn} />}
         </div>
       </div>
+      {isSelf && (
+        <div className={styles.avatarSlot}>
+          <Avatar
+            name={senderProfile.nickname}
+            url={senderProfile.avatarUrl || undefined}
+            size={34}
+            ariaLabel={`查看 ${senderProfile.nickname} 的资料`}
+            onClick={openSenderProfile}
+          />
+        </div>
+      )}
     </div>
   );
+}
+
+function getCurrentReaction(
+  base: ReactionGroup[],
+  overrides: Record<string, ReactionGroup>,
+  emoji: string,
+): ReactionGroup | undefined {
+  return mergeReactionGroups(base, Object.values(overrides)).find((reaction) => reaction.emoji === emoji);
+}
+
+function mergeReactionGroups(base: ReactionGroup[], overrides: ReactionGroup[]): ReactionGroup[] {
+  const merged = new Map<string, ReactionGroup>();
+
+  for (const reaction of base) {
+    merged.set(reaction.emoji, reaction);
+  }
+
+  for (const reaction of overrides) {
+    merged.set(reaction.emoji, reaction);
+  }
+
+  return [...merged.values()].filter((reaction) => reaction.count > 0);
+}
+
+function addUserId(userIds: string[], userId: string | null): string[] {
+  if (!userId) return userIds;
+  return [...new Set([...userIds, userId])];
+}
+
+function removeUserId(userIds: string[], userId: string | null): string[] {
+  if (!userId) return userIds;
+  return userIds.filter((id) => id !== userId);
 }
 
 function getDeliveryState(message: Message): DeliveryState {

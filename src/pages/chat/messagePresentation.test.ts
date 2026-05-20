@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatMessageClock, getMessageSenderLabel } from './messagePresentation';
+import { formatMessageClock, getMessageSenderLabel, getMessageSenderProfile } from './messagePresentation';
 
 describe('messagePresentation', () => {
   it('formats message time as a stable two-digit clock', () => {
@@ -11,5 +11,14 @@ describe('messagePresentation', () => {
   it('uses friendly preview names before falling back to sender id', () => {
     expect(getMessageSenderLabel('u-2')).toBe('Designer');
     expect(getMessageSenderLabel('unknown-user')).toBe('unknown-user');
+  });
+
+  it('builds preview sender profile metadata for the profile panel', () => {
+    expect(getMessageSenderProfile('u-2')).toEqual({
+      userId: 'u-2',
+      nickname: 'Designer',
+      avatarUrl: '',
+      bio: '界面与动效设计',
+    });
   });
 });
