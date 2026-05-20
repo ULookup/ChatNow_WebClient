@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Conversation } from '@/proto/conversation/conversation_service';
-import type { Message, MessageContent } from '@/proto/message/message_types';
+import type { Message, MessageContent, ReplyRef } from '@/proto/message/message_types';
 import { MessageStatus } from '@/proto/message/message_types';
 import { ConversationService } from '@/services/conversation';
 import { TransmiteService } from '@/services/transmite';
@@ -16,7 +16,7 @@ interface ChatState {
 
   loadConversations: () => Promise<void>;
   openConversation: (convId: string) => Promise<void>;
-  sendMessage: (convId: string, content: MessageContent) => Promise<void>;
+  sendMessage: (convId: string, content: MessageContent, replyTo?: ReplyRef) => Promise<void>;
   loadHistory: (convId: string, beforeSeq: number) => Promise<void>;
   syncMessages: (convId: string, afterSeq: number) => Promise<void>;
   markRead: (convId: string, seq: number) => Promise<void>;
@@ -80,13 +80,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  sendMessage: async (convId, content) => {
+  sendMessage: async (convId, content, replyTo) => {
     const clientMsgId = crypto.randomUUID();
     const rsp = await TransmiteService.send({
       requestId: crypto.randomUUID(),
       conversationId: convId,
       content,
       clientMsgId,
+      replyTo,
       mentionedUserIds: [],
     });
     if (rsp.header?.success && rsp.message) {

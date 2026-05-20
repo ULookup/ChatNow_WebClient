@@ -1,40 +1,83 @@
 .sidebar {
-  padding: 14px;
+  padding: 18px 14px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .sidebarTitle {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 8px;
+  font-size: 22px;
+  font-weight: 750;
+  margin-bottom: 14px;
   color: var(--text-primary);
+  letter-spacing: 0;
 }
 
 .menuItem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 13px;
+  font-weight: 650;
   cursor: pointer;
   color: var(--text-primary);
-  transition: all 0.15s;
+  transform: translate3d(0, 0, 0);
+  transition:
+    background-color var(--motion-fast),
+    border-color var(--motion-fast),
+    color var(--motion-fast),
+    transform var(--motion-spring),
+    box-shadow var(--motion-medium);
+  border: 1px solid transparent;
 }
 
 .menuItem:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.62);
+  border-color: var(--border-subtle);
+  box-shadow: 0 10px 24px rgba(35, 49, 68, 0.08);
+  transform: translate3d(2px, -1px, 0);
+}
+
+.active {
+  background: var(--surface-selected);
+  border-color: var(--accent-border);
+  color: var(--accent);
 }
 
 .menuItemDanger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
   font-size: 13px;
+  font-weight: 650;
   cursor: pointer;
   color: var(--danger);
   margin-top: 12px;
-  transition: all 0.15s;
+  transform: translate3d(0, 0, 0);
+  transition:
+    background-color var(--motion-fast),
+    border-color var(--motion-fast),
+    color var(--motion-fast),
+    transform var(--motion-spring),
+    box-shadow var(--motion-medium);
+  text-align: left;
 }
 
 .menuItemDanger:hover {
-  background: rgba(239, 68, 68, 0.06);
+  background: var(--danger-soft);
+  border-color: rgba(239, 68, 68, 0.16);
+  box-shadow: 0 10px 24px rgba(239, 68, 68, 0.08);
+  transform: translate3d(2px, -1px, 0);
+}
+
+.menuItemDanger:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }

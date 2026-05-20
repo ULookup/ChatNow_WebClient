@@ -1,12 +1,16 @@
 import type { Message, MessageContent } from '@/proto/message/message_types';
 import { MessageStatus } from '@/proto/message/message_types';
 import { useAuthStore } from '@/stores/authStore';
+import { useUIStore } from '@/stores/uiStore';
+import { IconButton } from '@/components/Icon/Icon';
+import { getMessageTextPreview } from '../messageComposer';
 import { TextBubble } from './TextBubble';
 import { ImageBubble } from './ImageBubble';
 import { FileBubble } from './FileBubble';
 import { AudioBubble } from './AudioBubble';
 import { VideoBubble } from './VideoBubble';
 import { LocationBubble } from './LocationBubble';
+import { MessageStatusIndicator, type DeliveryState } from './MessageStatusIndicator';
 import styles from './MessageBubble.module.css';
 
 interface Props {
@@ -15,7 +19,9 @@ interface Props {
 
 export function MessageBubble({ message }: Props) {
   const userId = useAuthStore((s) => s.userId);
+  const setReplyTarget = useUIStore((s) => s.setReplyTarget);
   const isSelf = message.senderId === userId;
+  const deliveryState = getDeliveryState(message);
   const isRecalled = message.status === MessageStatus.RECALLED;
   const isDeleted = message.status === MessageStatus.DELETED;
   const containerClass = `${styles.container} ${isSelf ? styles.self : styles.other}`;
@@ -40,13 +46,46 @@ export function MessageBubble({ message }: Props) {
 
   return (
     <div className={containerClass}>
-      <div
-        className={`${styles.bubble} ${isSelf ? styles.bubbleSelf : styles.bubbleOther}`}
-      >
-        {renderBody(content)}
+      <div className={styles.stack}>
+        <div
+          className={`${styles.bubble} ${isSelf ? styles.bubbleSelf : styles.bubbleOther}`}
+        >
+          {message.replyTo && (
+            <div className={styles.replyQuote}>
+              <span>回复</span>
+              <strong>{message.replyTo.contentPreview}</strong>
+            </div>
+          )}
+          {renderBody(content)}
+        </div>
+        <div className={`${styles.messageMeta} ${isSelf ? styles.metaSelf : ''}`}>
+          {isSelf && <MessageStatusIndicator status={message.status} deliveryState={deliveryState} />}
+        </div>
+        <div className={`${styles.actions} ${isSelf ? styles.actionsSelf : ''}`}>
+          <IconButton icon="smile" label="添加表情回应" className={styles.actionBtn} />
+          <IconButton
+            icon="reply"
+            label="回复消息"
+            className={styles.actionBtn}
+            onClick={() => setReplyTarget({
+              messageId: message.messageId,
+              senderId: message.senderId,
+              preview: getMessageTextPreview(message),
+            })}
+          />
+          <IconButton icon="copy" label="复制消息" className={styles.actionBtn} />
+          <IconButton icon="forward" label="转发消息" className={styles.actionBtn} />
+          {isSelf && <IconButton icon="rotate-ccw" label="撤回消息" className={styles.actionBtn} />}
+        </div>
       </div>
     </div>
   );
+}
+
+function getDeliveryState(message: Message): DeliveryState {
+  if (message.clientMsgId.startsWith('local-pending')) return 'sending';
+  if (message.clientMsgId.startsWith('local-failed')) return 'failed';
+  return 'sent';
 }
 
 function renderBody(content: MessageContent | undefined): React.ReactElement {

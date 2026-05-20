@@ -1,8 +1,19 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { useAuthStore } from '../authStore';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { useAuthStore as useAuthStoreType } from '../authStore';
+
+let useAuthStore: typeof useAuthStoreType;
 
 describe('authStore', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    const storage = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => storage.set(key, value),
+      removeItem: (key: string) => storage.delete(key),
+      clear: () => storage.clear(),
+    });
+    vi.resetModules();
+    ({ useAuthStore } = await import('../authStore'));
     useAuthStore.setState({
       isAuthenticated: false,
       userId: null,
@@ -11,6 +22,10 @@ describe('authStore', () => {
       refreshToken: null,
     });
     localStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('should initialize as not authenticated when no token exists', () => {

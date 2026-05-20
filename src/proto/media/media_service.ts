@@ -632,9 +632,10 @@ class ApplyUploadRsp$Type extends MessageType<ApplyUploadRsp> {
         return message;
     }
     private binaryReadMap5(map: ApplyUploadRsp["headers"], reader: IBinaryReader, options: BinaryReadOptions): void {
+        void options;
         let len = reader.uint32(), end = reader.pos + len, key: keyof ApplyUploadRsp["headers"] | undefined, val: ApplyUploadRsp["headers"][any] | undefined;
         while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag();
+            let [fieldNo] = reader.tag();
             switch (fieldNo) {
                 case 1:
                     key = reader.string();

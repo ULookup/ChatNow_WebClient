@@ -1,12 +1,13 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useUIStore, type Module } from '@/stores/uiStore';
 import { Avatar } from '@/components/Avatar/Avatar';
+import { Icon, type IconName } from '@/components/Icon/Icon';
 import styles from './NavRail.module.css';
 
-const NAV_ITEMS: Array<{ module: Module; icon: string; label: string }> = [
-  { module: 'chat', icon: '💬', label: '聊天' },
-  { module: 'contacts', icon: '👤', label: '联系人' },
-  { module: 'settings', icon: '⚙', label: '设置' },
+const NAV_ITEMS: Array<{ module: Module; icon: IconName; label: string }> = [
+  { module: 'chat', icon: 'message-circle', label: '聊天' },
+  { module: 'contacts', icon: 'users', label: '联系人' },
+  { module: 'settings', icon: 'settings', label: '设置' },
 ];
 
 export function NavRail() {
@@ -30,9 +31,10 @@ export function NavRail() {
             key={item.module}
             className={`${styles.navIcon} ${activeModule === item.module ? styles.active : ''}`}
             onClick={() => switchModule(item.module)}
+            aria-label={item.label}
             title={item.label}
           >
-            <span style={{ fontSize: 18 }}>{item.icon}</span>
+            <Icon name={item.icon} />
           </button>
         ))}
       </div>
