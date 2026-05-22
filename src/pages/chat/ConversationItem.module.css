@@ -139,7 +139,7 @@
 
 .item:hover .quickActions,
 .item:focus-within .quickActions {
-  max-width: 96px;
+  max-width: 124px;
   opacity: 1;
   pointer-events: auto;
   transform: translateX(0) scale(1);

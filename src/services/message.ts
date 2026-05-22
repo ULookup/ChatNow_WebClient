@@ -12,6 +12,8 @@ import {
   AddReactionRsp,
   RemoveReactionReq,
   RemoveReactionRsp,
+  GetReactionsReq,
+  GetReactionsRsp,
   PinMessageReq,
   PinMessageRsp,
   UnpinMessageReq,
@@ -20,6 +22,10 @@ import {
   ListPinnedRsp,
   DeleteMessagesReq,
   DeleteMessagesRsp,
+  ClearConversationReq,
+  ClearConversationRsp,
+  UpdateReadAckReq,
+  UpdateReadAckRsp,
 } from '@/proto/message/message_service';
 
 /**
@@ -78,6 +84,14 @@ export const MessageService = {
       responseType: RemoveReactionRsp,
     }),
 
+  getReactions: (req: GetReactionsReq) =>
+    rpcCall<GetReactionsRsp>({
+      path: '/service/message/get_reactions',
+      auth: 'JWT_REQUIRED',
+      requestBody: GetReactionsReq.toBinary(req),
+      responseType: GetReactionsRsp,
+    }),
+
   pin: (req: PinMessageReq) =>
     rpcCall<PinMessageRsp>({
       path: '/service/message/pin',
@@ -108,5 +122,21 @@ export const MessageService = {
       auth: 'JWT_REQUIRED',
       requestBody: DeleteMessagesReq.toBinary(req),
       responseType: DeleteMessagesRsp,
+    }),
+
+  clearConversation: (req: ClearConversationReq) =>
+    rpcCall<ClearConversationRsp>({
+      path: '/service/message/clear',
+      auth: 'JWT_REQUIRED',
+      requestBody: ClearConversationReq.toBinary(req),
+      responseType: ClearConversationRsp,
+    }),
+
+  updateReadAck: (req: UpdateReadAckReq) =>
+    rpcCall<UpdateReadAckRsp>({
+      path: '/service/message/update_read_ack',
+      auth: 'JWT_REQUIRED',
+      requestBody: UpdateReadAckReq.toBinary(req),
+      responseType: UpdateReadAckRsp,
     }),
 };

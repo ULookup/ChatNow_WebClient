@@ -1,17 +1,20 @@
 import { useMemo, useRef, useEffect, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import type { Message } from '@/proto/message/message_types';
 import { useChatStore } from '@/stores/chatStore';
 import { IconButton } from '@/components/Icon/Icon';
 import { MessageBubble } from '../MessageBubble/MessageBubble';
 import { buildMessageTimeline, type MessageTimelineRow } from '../messageTimeline';
 import { getMessageSearchResults } from '../messageSearch';
+import { getMessageSenderLabel } from '../messagePresentation';
 import styles from './MessageList.module.css';
 
 interface MessageListProps {
   searchQuery?: string;
+  searchMessages?: Message[];
 }
 
-export function MessageList({ searchQuery = '' }: MessageListProps) {
+export function MessageList({ searchQuery = '', searchMessages }: MessageListProps) {
   const activeId = useChatStore((s) => s.activeConversationId);
   const lastReadSeq = useChatStore((s) =>
     activeId ? s.lastReadSeq[activeId] : undefined,
@@ -19,15 +22,25 @@ export function MessageList({ searchQuery = '' }: MessageListProps) {
   const messages = useChatStore((s) =>
     activeId ? (s.messagesByConv[activeId] ?? []) : [],
   );
+  const typingUsersByConv = useChatStore((s) => s.typingUsersByConv);
+  const updateReadAck = useChatStore((s) => s.updateReadAck);
+  const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
 
   const parentRef = useRef<HTMLDivElement>(null);
   const [isAwayFromBottom, setIsAwayFromBottom] = useState(false);
-  const typingLabel = activeId?.startsWith('preview-') ? 'Designer 正在输入' : undefined;
+  const typingUserIds = activeId ? typingUsersByConv[activeId] ?? [] : [];
+  const typingLabel = getTypingLabel(activeId, typingUserIds);
   const searchResults = useMemo(
     () => getMessageSearchResults(messages, searchQuery),
     [messages, searchQuery],
   );
-  const visibleMessages = searchResults.query ? searchResults.matches : messages;
+  const visibleMessages = searchResults.query ? searchMessages ?? searchResults.matches : messages;
+  const maxVisibleSeq = useMemo(
+    () => visibleMessages.reduce((max, message) => (
+      message.seqId && message.seqId > max ? message.seqId : max
+    ), 0n),
+    [visibleMessages],
+  );
   const rows = useMemo(
     () => buildMessageTimeline(visibleMessages, {
       lastReadSeq: searchResults.query ? undefined : lastReadSeq,
@@ -49,6 +62,13 @@ export function MessageList({ searchQuery = '' }: MessageListProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows.length]);
+
+  useEffect(() => {
+    if (!activeId || isPreview || searchResults.query || maxVisibleSeq <= BigInt(lastReadSeq ?? 0)) return;
+    updateReadAck(activeId, maxVisibleSeq).catch(() => {
+      // Read receipts should never interrupt message reading.
+    });
+  }, [activeId, isPreview, lastReadSeq, maxVisibleSeq, searchResults.query, updateReadAck]);
 
   const handleScroll = () => {
     const el = parentRef.current;
@@ -131,6 +151,14 @@ export function MessageList({ searchQuery = '' }: MessageListProps) {
       )}
     </div>
   );
+}
+
+export function getTypingLabel(activeId: string | null, typingUserIds: string[]): string | undefined {
+  if (typingUserIds.length > 0) {
+    if (typingUserIds.length === 1) return `${getMessageSenderLabel(typingUserIds[0])} 正在输入`;
+    return `${typingUserIds.slice(0, 2).map(getMessageSenderLabel).join('、')} 等正在输入`;
+  }
+  return activeId?.startsWith('preview-') ? 'Designer 正在输入' : undefined;
 }
 
 function TimelineRow({ row, searchQuery }: { row: MessageTimelineRow; searchQuery: string }) {

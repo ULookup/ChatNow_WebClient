@@ -11,6 +11,20 @@ interface LocalTextMessageInput {
   } | null;
 }
 
+interface LocalFileMessageInput {
+  conversationId: string;
+  senderId: string;
+  fileId: string;
+  fileName: string;
+  fileSize: bigint;
+  mimeType: string;
+  replyTo?: {
+    messageId: bigint;
+    senderId: string;
+    preview: string;
+  } | null;
+}
+
 export function getMessageTextPreview(message: Message, maxLength = 32): string {
   const body = message.content?.body;
   let preview = '[消息]';
@@ -58,6 +72,55 @@ export function createLocalTextMessage({ conversationId, senderId, text, replyTo
     content: {
       type: MessageType.TEXT,
       body: { oneofKind: 'text', text: { text } },
+    },
+  };
+}
+
+export function createLocalFileMessage({
+  conversationId,
+  senderId,
+  fileId,
+  fileName,
+  fileSize,
+  mimeType,
+  replyTo,
+}: LocalFileMessageInput): Message {
+  const now = BigInt(Date.now());
+  const localId = now * 1000n;
+
+  return {
+    messageId: localId,
+    conversationId,
+    senderId,
+    createdAtMs: now,
+    editedAtMs: 0n,
+    seqId: localId,
+    userSeq: localId,
+    clientMsgId: `local-pending-${localId.toString()}`,
+    status: MessageStatus.NORMAL,
+    mentionedUserIds: [],
+    reactions: [],
+    isPinned: false,
+    replyTo: replyTo
+      ? {
+          repliedMessageId: replyTo.messageId,
+          repliedSenderId: replyTo.senderId,
+          repliedMessageType: MessageType.TEXT,
+          contentPreview: replyTo.preview,
+          isRecalled: false,
+        }
+      : undefined,
+    content: {
+      type: MessageType.FILE,
+      body: {
+        oneofKind: 'file',
+        file: {
+          fileId,
+          fileName,
+          fileSize,
+          mimeType,
+        },
+      },
     },
   };
 }

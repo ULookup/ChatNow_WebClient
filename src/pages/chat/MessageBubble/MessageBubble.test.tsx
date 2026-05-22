@@ -1,6 +1,13 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageStatus, MessageType, type Message } from '@/proto/message/message_types';
+import { PresenceState } from '@/proto/presence/presence_service';
+
+const resolveDownloadUrl = vi.fn();
+
+vi.mock('@/services/mediaDownload', () => ({
+  resolveDownloadUrl,
+}));
 
 const textMessage: Message = {
   messageId: 42n,
@@ -24,6 +31,73 @@ const textMessage: Message = {
   isPinned: false,
 };
 
+const fileMessage: Message = {
+  ...textMessage,
+  messageId: 43n,
+  content: {
+    type: MessageType.FILE,
+    body: {
+      oneofKind: 'file',
+      file: {
+        fileId: 'file-1',
+        fileName: 'brief.pdf',
+        fileSize: 12_345n,
+        mimeType: 'application/pdf',
+      },
+    },
+  },
+};
+
+const imageMessage: Message = {
+  ...textMessage,
+  messageId: 44n,
+  content: {
+    type: MessageType.IMAGE,
+    body: {
+      oneofKind: 'image',
+      image: {
+        fileId: 'image-1',
+        width: 640,
+        height: 480,
+        thumbnailUrl: '',
+      },
+    },
+  },
+};
+
+const videoMessage: Message = {
+  ...textMessage,
+  messageId: 45n,
+  content: {
+    type: MessageType.VIDEO,
+    body: {
+      oneofKind: 'video',
+      video: {
+        fileId: 'video-1',
+        durationSec: 95,
+        width: 1280,
+        height: 720,
+        thumbnailUrl: 'https://cdn.example/video-thumb.jpg',
+      },
+    },
+  },
+};
+
+const audioMessage: Message = {
+  ...textMessage,
+  messageId: 46n,
+  content: {
+    type: MessageType.AUDIO,
+    body: {
+      oneofKind: 'audio',
+      audio: {
+        fileId: 'audio-1',
+        durationSec: 42,
+      },
+    },
+  },
+};
+
 describe('MessageBubble', () => {
   beforeEach(() => {
     const storage = new Map<string, string>();
@@ -36,9 +110,11 @@ describe('MessageBubble', () => {
   });
 
   afterEach(async () => {
-    const [{ useUIStore }, { useAuthStore }] = await Promise.all([
+    const [{ useUIStore }, { useAuthStore }, { usePresenceStore }, { useChatStore }] = await Promise.all([
       import('@/stores/uiStore'),
       import('@/stores/authStore'),
+      import('@/stores/presenceStore'),
+      import('@/stores/chatStore'),
     ]);
     useUIStore.setState({
       replyTarget: null,
@@ -48,8 +124,17 @@ describe('MessageBubble', () => {
       toasts: [],
     });
     useAuthStore.setState({ userId: null });
+    usePresenceStore.setState({ presences: {} });
+    useChatStore.setState({
+      conversations: [],
+      activeConversationId: null,
+      messagesByConv: {},
+      lastReadSeq: {},
+      unreadCounts: {},
+    });
     cleanup();
     vi.unstubAllGlobals();
+    resolveDownloadUrl.mockReset();
   });
 
   it('stores a reply target when the reply action is clicked', async () => {
@@ -85,6 +170,80 @@ describe('MessageBubble', () => {
     await waitFor(() => {
       expect(clipboard.writeText).toHaveBeenCalledWith('这是一条需要被引用回复的消息');
     });
+  });
+
+  it('requests a download URL when downloading a file message', async () => {
+    const open = vi.fn();
+    vi.stubGlobal('open', open);
+    resolveDownloadUrl.mockResolvedValue('https://download.example/brief.pdf');
+    const [{ useAuthStore }, { MessageBubble }] = await Promise.all([
+      import('@/stores/authStore'),
+      import('./MessageBubble'),
+    ]);
+    useAuthStore.setState({ userId: 'me' });
+
+    render(<MessageBubble message={fileMessage} />);
+    fireEvent.click(screen.getByRole('button', { name: '下载 brief.pdf' }));
+
+    await waitFor(() => {
+      expect(resolveDownloadUrl).toHaveBeenCalledWith('file-1');
+      expect(open).toHaveBeenCalledWith('https://download.example/brief.pdf', '_blank', 'noopener,noreferrer');
+    });
+  });
+
+  it('requests a download URL to render image messages without a thumbnail URL', async () => {
+    resolveDownloadUrl.mockResolvedValue('https://download.example/image-1.jpg');
+    const [{ useAuthStore }, { MessageBubble }] = await Promise.all([
+      import('@/stores/authStore'),
+      import('./MessageBubble'),
+    ]);
+    useAuthStore.setState({ userId: 'me' });
+
+    render(<MessageBubble message={imageMessage} />);
+
+    const image = await screen.findByRole('img', { name: '图片消息' });
+    expect(resolveDownloadUrl).toHaveBeenCalledWith('image-1');
+    expect(image.getAttribute('src')).toBe('https://download.example/image-1.jpg');
+  });
+
+  it('requests a download URL when opening a video message', async () => {
+    const open = vi.fn();
+    vi.stubGlobal('open', open);
+    resolveDownloadUrl.mockResolvedValue('https://download.example/video-1.mp4');
+    const [{ useAuthStore }, { MessageBubble }] = await Promise.all([
+      import('@/stores/authStore'),
+      import('./MessageBubble'),
+    ]);
+    useAuthStore.setState({ userId: 'me' });
+
+    render(<MessageBubble message={videoMessage} />);
+    fireEvent.click(screen.getByRole('button', { name: '播放视频消息' }));
+
+    await waitFor(() => {
+      expect(resolveDownloadUrl).toHaveBeenCalledWith('video-1');
+      expect(open).toHaveBeenCalledWith('https://download.example/video-1.mp4', '_blank', 'noopener,noreferrer');
+    });
+    expect(screen.getByText('1:35')).toBeTruthy();
+  });
+
+  it('requests a download URL when opening an audio message', async () => {
+    const open = vi.fn();
+    vi.stubGlobal('open', open);
+    resolveDownloadUrl.mockResolvedValue('https://download.example/audio-1.m4a');
+    const [{ useAuthStore }, { MessageBubble }] = await Promise.all([
+      import('@/stores/authStore'),
+      import('./MessageBubble'),
+    ]);
+    useAuthStore.setState({ userId: 'me' });
+
+    render(<MessageBubble message={audioMessage} />);
+    fireEvent.click(screen.getByRole('button', { name: '播放语音消息' }));
+
+    await waitFor(() => {
+      expect(resolveDownloadUrl).toHaveBeenCalledWith('audio-1');
+      expect(open).toHaveBeenCalledWith('https://download.example/audio-1.m4a', '_blank', 'noopener,noreferrer');
+    });
+    expect(screen.getByText('0:42')).toBeTruthy();
   });
 
   it('renders reaction groups under the message bubble', async () => {
@@ -190,5 +349,129 @@ describe('MessageBubble', () => {
       avatarUrl: '',
       bio: '界面与动效设计',
     });
+  });
+
+  it('shows sender presence on the message avatar', async () => {
+    const [{ useAuthStore }, { usePresenceStore }, { MessageBubble }] = await Promise.all([
+      import('@/stores/authStore'),
+      import('@/stores/presenceStore'),
+      import('./MessageBubble'),
+    ]);
+    useAuthStore.setState({ userId: 'me' });
+    usePresenceStore.setState({
+      presences: {
+        'u-2': {
+          userId: 'u-2',
+          aggregatedState: PresenceState.BUSY,
+          lastActiveAtMs: 0n,
+          devices: [],
+        },
+      },
+    });
+
+    render(<MessageBubble message={{ ...textMessage, senderId: 'u-2' }} />);
+
+    expect(screen.getByLabelText('Designer 当前状态：忙碌')).toBeTruthy();
+  });
+
+  it('calls the chat store when adding a reaction outside preview mode', async () => {
+    const [{ useAuthStore }, { useChatStore }, { MessageBubble }] = await Promise.all([
+      import('@/stores/authStore'),
+      import('@/stores/chatStore'),
+      import('./MessageBubble'),
+    ]);
+    const addReaction = vi.fn().mockResolvedValue(undefined);
+    const originalAddReaction = useChatStore.getState().addReaction;
+    useAuthStore.setState({ userId: 'me' });
+    useChatStore.setState({ addReaction });
+
+    render(<MessageBubble message={textMessage} />);
+    fireEvent.click(screen.getByRole('button', { name: '添加表情回应' }));
+    fireEvent.click(screen.getByRole('button', { name: '用 ❤️ 回应' }));
+
+    await waitFor(() => {
+      expect(addReaction).toHaveBeenCalledWith('conversation-1', 42n, '❤️', 'me');
+    });
+    useChatStore.setState({ addReaction: originalAddReaction });
+  });
+
+  it('calls the chat store when recalling an own message outside preview mode', async () => {
+    const [{ useAuthStore }, { useChatStore }, { MessageBubble }] = await Promise.all([
+      import('@/stores/authStore'),
+      import('@/stores/chatStore'),
+      import('./MessageBubble'),
+    ]);
+    const recallMessage = vi.fn().mockResolvedValue(undefined);
+    const originalRecallMessage = useChatStore.getState().recallMessage;
+    useAuthStore.setState({ userId: 'me' });
+    useChatStore.setState({ recallMessage });
+
+    render(<MessageBubble message={{ ...textMessage, senderId: 'me' }} />);
+    fireEvent.click(screen.getByRole('button', { name: '撤回消息' }));
+
+    await waitFor(() => {
+      expect(recallMessage).toHaveBeenCalledWith('conversation-1', 42n);
+    });
+    useChatStore.setState({ recallMessage: originalRecallMessage });
+  });
+
+  it('calls the chat store when pinning a message outside preview mode', async () => {
+    const [{ useAuthStore }, { useChatStore }, { MessageBubble }] = await Promise.all([
+      import('@/stores/authStore'),
+      import('@/stores/chatStore'),
+      import('./MessageBubble'),
+    ]);
+    const pinMessage = vi.fn().mockResolvedValue(undefined);
+    const originalPinMessage = useChatStore.getState().pinMessage;
+    useAuthStore.setState({ userId: 'me' });
+    useChatStore.setState({ pinMessage });
+
+    render(<MessageBubble message={textMessage} />);
+    fireEvent.click(screen.getByRole('button', { name: '置顶消息' }));
+
+    await waitFor(() => {
+      expect(pinMessage).toHaveBeenCalledWith('conversation-1', 42n);
+    });
+    useChatStore.setState({ pinMessage: originalPinMessage });
+  });
+
+  it('calls the chat store when unpinning a pinned message outside preview mode', async () => {
+    const [{ useAuthStore }, { useChatStore }, { MessageBubble }] = await Promise.all([
+      import('@/stores/authStore'),
+      import('@/stores/chatStore'),
+      import('./MessageBubble'),
+    ]);
+    const unpinMessage = vi.fn().mockResolvedValue(undefined);
+    const originalUnpinMessage = useChatStore.getState().unpinMessage;
+    useAuthStore.setState({ userId: 'me' });
+    useChatStore.setState({ unpinMessage });
+
+    render(<MessageBubble message={{ ...textMessage, isPinned: true }} />);
+    fireEvent.click(screen.getByRole('button', { name: '取消置顶消息' }));
+
+    await waitFor(() => {
+      expect(unpinMessage).toHaveBeenCalledWith('conversation-1', 42n);
+    });
+    useChatStore.setState({ unpinMessage: originalUnpinMessage });
+  });
+
+  it('calls the chat store when deleting a message outside preview mode', async () => {
+    const [{ useAuthStore }, { useChatStore }, { MessageBubble }] = await Promise.all([
+      import('@/stores/authStore'),
+      import('@/stores/chatStore'),
+      import('./MessageBubble'),
+    ]);
+    const deleteMessages = vi.fn().mockResolvedValue(undefined);
+    const originalDeleteMessages = useChatStore.getState().deleteMessages;
+    useAuthStore.setState({ userId: 'me' });
+    useChatStore.setState({ deleteMessages });
+
+    render(<MessageBubble message={textMessage} />);
+    fireEvent.click(screen.getByRole('button', { name: '删除消息' }));
+
+    await waitFor(() => {
+      expect(deleteMessages).toHaveBeenCalledWith('conversation-1', [42n]);
+    });
+    useChatStore.setState({ deleteMessages: originalDeleteMessages });
   });
 });

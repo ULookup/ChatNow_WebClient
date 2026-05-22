@@ -13,13 +13,16 @@ export function ConversationItem({ conv }: Props) {
   const openConversation = useChatStore(s => s.openConversation);
   const setPin = useChatStore(s => s.setPin);
   const setMute = useChatStore(s => s.setMute);
+  const setVisible = useChatStore(s => s.setVisible);
   const openRightPanel = useUIStore(s => s.openRightPanel);
+  const addToast = useUIStore(s => s.addToast);
   const isActive = conv.conversationId === activeId;
   const unread = Number(conv.self?.unreadCount ?? 0);
   const isMuted = conv.self?.isMuted;
   const isPinned = conv.self?.isPinned;
   const draft = conv.self?.draft?.trim();
   const preview = draft || conv.lastMessage?.contentPreview || '[消息]';
+  const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
   const handleOpen = () => {
     if (conv.conversationId) openConversation(conv.conversationId);
   };
@@ -76,6 +79,22 @@ export function ConversationItem({ conv }: Props) {
             active={isMuted}
             className={styles.quickBtn}
             onClick={() => conv.conversationId && setMute(conv.conversationId, !isMuted)}
+          />
+          <IconButton
+            icon="eye-off"
+            label="隐藏会话"
+            className={styles.quickBtn}
+            onClick={() => {
+              if (!conv.conversationId) return;
+              if (isPreview) {
+                useChatStore.setState((state) => ({
+                  conversations: state.conversations.filter(item => item.conversationId !== conv.conversationId),
+                  activeConversationId: state.activeConversationId === conv.conversationId ? null : state.activeConversationId,
+                }));
+                return;
+              }
+              setVisible(conv.conversationId, false).catch(() => addToast('隐藏会话失败，请重试', 'error'));
+            }}
           />
           <IconButton
             icon="panel-right"

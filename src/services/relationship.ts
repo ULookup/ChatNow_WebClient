@@ -83,7 +83,7 @@ export const RelationshipService = {
 
   listBlockedUsers: (req: ListBlockedReq) =>
     rpcCall<ListBlockedRsp>({
-      path: '/service/relationship/list_blocked_users',
+      path: '/service/relationship/list_blocked',
       auth: 'JWT_REQUIRED',
       requestBody: ListBlockedReq.toBinary(req),
       responseType: ListBlockedRsp,
@@ -91,7 +91,7 @@ export const RelationshipService = {
 
   listPendingRequests: (req: ListPendingReq) =>
     rpcCall<ListPendingRsp>({
-      path: '/service/relationship/list_pending_requests',
+      path: '/service/relationship/list_pending',
       auth: 'JWT_REQUIRED',
       requestBody: ListPendingReq.toBinary(req),
       responseType: ListPendingRsp,

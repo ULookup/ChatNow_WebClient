@@ -3,6 +3,9 @@ import type { Message, MessageContent, ReactionGroup } from '@/proto/message/mes
 import { MessageStatus } from '@/proto/message/message_types';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
+import { usePresenceStore } from '@/stores/presenceStore';
+import { useChatStore } from '@/stores/chatStore';
+import { formatPresenceLabel, getPresenceTone } from '@/stores/presencePresentation';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { IconButton } from '@/components/Icon/Icon';
 import { getMessageTextPreview } from '../messageComposer';
@@ -24,15 +27,29 @@ interface Props {
 }
 
 export function MessageBubble({ message, searchQuery = '' }: Props) {
+  const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
   const userId = useAuthStore((s) => s.userId);
   const setReplyTarget = useUIStore((s) => s.setReplyTarget);
   const openRightPanel = useUIStore((s) => s.openRightPanel);
   const setSelectedUserProfile = useUIStore((s) => s.setSelectedUserProfile);
   const addToast = useUIStore((s) => s.addToast);
+  const senderPresence = usePresenceStore((s) => s.presences[message.senderId]);
+  const addMessageReaction = useChatStore((s) => s.addReaction);
+  const removeMessageReaction = useChatStore((s) => s.removeReaction);
+  const refreshMessageReactions = useChatStore((s) => s.refreshMessageReactions);
+  const recallMessage = useChatStore((s) => s.recallMessage);
+  const pinMessage = useChatStore((s) => s.pinMessage);
+  const unpinMessage = useChatStore((s) => s.unpinMessage);
+  const deleteMessages = useChatStore((s) => s.deleteMessages);
+  const handleMessagePinned = useChatStore((s) => s.handleMessagePinned);
+  const handleMessagesDeleted = useChatStore((s) => s.handleMessagesDeleted);
   const isSelf = message.senderId === userId;
   const deliveryState = getDeliveryState(message);
-  const isRecalled = message.status === MessageStatus.RECALLED;
-  const isDeleted = message.status === MessageStatus.DELETED;
+  const [locallyRecalled, setLocallyRecalled] = useState(false);
+  const [locallyPinned, setLocallyPinned] = useState(message.isPinned);
+  const [locallyDeleted, setLocallyDeleted] = useState(false);
+  const isRecalled = locallyRecalled || message.status === MessageStatus.RECALLED;
+  const isDeleted = locallyDeleted || message.status === MessageStatus.DELETED;
   const containerClass = `${styles.container} ${isSelf ? styles.self : styles.other}`;
   const [reactionTrayOpen, setReactionTrayOpen] = useState(false);
   const [reactionOverrides, setReactionOverrides] = useState<Record<string, ReactionGroup>>({});
@@ -60,6 +77,8 @@ export function MessageBubble({ message, searchQuery = '' }: Props) {
   const content = message.content;
   const messageTime = formatMessageClock(message.createdAtMs);
   const senderProfile = getMessageSenderProfile(message.senderId);
+  const presenceLabel = formatPresenceLabel(senderPresence);
+  const presenceTone = getPresenceTone(senderPresence);
   const openSenderProfile = () => {
     setSelectedUserProfile(senderProfile);
     openRightPanel('user_profile');
@@ -73,56 +92,137 @@ export function MessageBubble({ message, searchQuery = '' }: Props) {
       addToast('复制失败，请重试', 'error');
     }
   };
-  const addReaction = (emoji: string) => {
-    setReactionOverrides((overrides) => {
-      const current = getCurrentReaction(message.reactions, overrides, emoji);
-      if (current?.selfReacted) return overrides;
+  const handleRecall = async () => {
+    setLocallyRecalled(true);
+    if (isPreview) return;
 
+    try {
+      await recallMessage(message.conversationId, message.messageId);
+      addToast('消息已撤回', 'success');
+    } catch {
+      setLocallyRecalled(false);
+      addToast('撤回失败，请重试', 'error');
+    }
+  };
+  const handleTogglePin = async () => {
+    const nextPinned = !locallyPinned;
+    setLocallyPinned(nextPinned);
+    handleMessagePinned(message.conversationId, message.messageId, nextPinned);
+
+    if (isPreview) return;
+
+    try {
+      if (nextPinned) {
+        await pinMessage(message.conversationId, message.messageId);
+        addToast('消息已置顶', 'success');
+      } else {
+        await unpinMessage(message.conversationId, message.messageId);
+        addToast('已取消置顶', 'success');
+      }
+    } catch {
+      setLocallyPinned(!nextPinned);
+      handleMessagePinned(message.conversationId, message.messageId, !nextPinned);
+      addToast(nextPinned ? '置顶失败，请重试' : '取消置顶失败，请重试', 'error');
+    }
+  };
+  const handleDelete = async () => {
+    setLocallyDeleted(true);
+    if (isPreview) {
+      handleMessagesDeleted(message.conversationId, [message.messageId]);
+      return;
+    }
+
+    try {
+      await deleteMessages(message.conversationId, [message.messageId]);
+      addToast('消息已删除', 'success');
+    } catch {
+      setLocallyDeleted(false);
+      addToast('删除失败，请重试', 'error');
+    }
+  };
+  const applyLocalReaction = (emoji: string) => {
+    const current = getCurrentReaction(message.reactions, reactionOverrides, emoji);
+    if (current?.selfReacted) return false;
+
+    setReactionOverrides((overrides) => {
+      const latest = getCurrentReaction(message.reactions, overrides, emoji);
+      if (latest?.selfReacted) return overrides;
       return {
         ...overrides,
         [emoji]: {
           emoji,
-          count: (current?.count ?? 0) + 1,
-          recentUserIds: addUserId(current?.recentUserIds ?? [], userId),
+          count: (latest?.count ?? 0) + 1,
+          recentUserIds: addUserId(latest?.recentUserIds ?? [], userId),
           selfReacted: true,
         },
       };
     });
-    setReactionTrayOpen(false);
+    return true;
   };
-  const toggleReaction = (emoji: string) => {
-    setReactionOverrides((overrides) => {
-      const current = getCurrentReaction(message.reactions, overrides, emoji);
-      if (!current) return overrides;
+  const addReaction = async (emoji: string) => {
+    const added = applyLocalReaction(emoji);
+    setReactionTrayOpen(false);
+    if (!added || isPreview) return;
 
-      const selfReacted = !current.selfReacted;
-      const count = current.count + (selfReacted ? 1 : -1);
+    try {
+      await addMessageReaction(message.conversationId, message.messageId, emoji, userId);
+    } catch {
+      addToast('表情回应失败，请重试', 'error');
+    }
+  };
+  const toggleReaction = async (emoji: string) => {
+    const current = getCurrentReaction(message.reactions, reactionOverrides, emoji);
+    const shouldAdd = Boolean(current && !current.selfReacted);
+    const shouldRemove = Boolean(current?.selfReacted);
+    if (!current) return;
+
+    setReactionOverrides((overrides) => {
+      const latest = getCurrentReaction(message.reactions, overrides, emoji);
+      if (!latest) return overrides;
+
+      const selfReacted = !latest.selfReacted;
+      const count = latest.count + (selfReacted ? 1 : -1);
       return {
         ...overrides,
         [emoji]: {
-          ...current,
+          ...latest,
           count,
           recentUserIds: selfReacted
-            ? addUserId(current.recentUserIds, userId)
-            : removeUserId(current.recentUserIds, userId),
+            ? addUserId(latest.recentUserIds, userId)
+            : removeUserId(latest.recentUserIds, userId),
           selfReacted,
         },
       };
+    });
+    if (isPreview || (!shouldAdd && !shouldRemove)) return;
+
+    try {
+      if (shouldAdd) {
+        await addMessageReaction(message.conversationId, message.messageId, emoji, userId);
+      } else {
+        await removeMessageReaction(message.conversationId, message.messageId, emoji, userId);
+      }
+    } catch {
+      addToast('表情回应失败，请重试', 'error');
+    }
+  };
+  const refreshReactions = () => {
+    if (isPreview) return;
+    refreshMessageReactions(message.conversationId, message.messageId).catch(() => {
+      // Reaction detail refresh is opportunistic; the local group remains usable.
     });
   };
 
   return (
     <div className={containerClass}>
       {!isSelf && (
-        <div className={styles.avatarSlot}>
-          <Avatar
-            name={senderProfile.nickname}
-            url={senderProfile.avatarUrl || undefined}
-            size={34}
-            ariaLabel={`查看 ${senderProfile.nickname} 的资料`}
-            onClick={openSenderProfile}
-          />
-        </div>
+        <AvatarWithPresence
+          name={senderProfile.nickname}
+          url={senderProfile.avatarUrl}
+          presenceLabel={presenceLabel}
+          presenceTone={presenceTone}
+          onClick={openSenderProfile}
+        />
       )}
       <div className={styles.stack}>
         {!isSelf && (
@@ -150,6 +250,8 @@ export function MessageBubble({ message, searchQuery = '' }: Props) {
                 type="button"
                 className={`${styles.reaction} ${reaction.selfReacted ? styles.reactionActive : ''}`}
                 aria-label={`${reaction.emoji} 表情回应，${reaction.count} 次`}
+                onFocus={refreshReactions}
+                onMouseEnter={refreshReactions}
                 onClick={() => toggleReaction(reaction.emoji)}
               >
                 <span>{reaction.emoji}</span>
@@ -196,20 +298,71 @@ export function MessageBubble({ message, searchQuery = '' }: Props) {
           />
           <IconButton icon="copy" label="复制消息" className={styles.actionBtn} onClick={handleCopy} />
           <IconButton icon="forward" label="转发消息" className={styles.actionBtn} />
-          {isSelf && <IconButton icon="rotate-ccw" label="撤回消息" className={styles.actionBtn} />}
+          <IconButton
+            icon="pin"
+            label={locallyPinned ? '取消置顶消息' : '置顶消息'}
+            active={locallyPinned}
+            className={styles.actionBtn}
+            onClick={handleTogglePin}
+          />
+          <IconButton
+            icon="trash"
+            label="删除消息"
+            variant="danger"
+            className={styles.actionBtn}
+            onClick={handleDelete}
+          />
+          {isSelf && (
+            <IconButton
+              icon="rotate-ccw"
+              label="撤回消息"
+              className={styles.actionBtn}
+              onClick={handleRecall}
+            />
+          )}
         </div>
       </div>
       {isSelf && (
-        <div className={styles.avatarSlot}>
-          <Avatar
-            name={senderProfile.nickname}
-            url={senderProfile.avatarUrl || undefined}
-            size={34}
-            ariaLabel={`查看 ${senderProfile.nickname} 的资料`}
-            onClick={openSenderProfile}
-          />
-        </div>
+        <AvatarWithPresence
+          name={senderProfile.nickname}
+          url={senderProfile.avatarUrl}
+          presenceLabel={presenceLabel}
+          presenceTone={presenceTone}
+          onClick={openSenderProfile}
+        />
       )}
+    </div>
+  );
+}
+
+function AvatarWithPresence({
+  name,
+  url,
+  presenceLabel,
+  presenceTone,
+  onClick,
+}: {
+  name: string;
+  url: string;
+  presenceLabel: string;
+  presenceTone: string;
+  onClick: () => void;
+}) {
+  return (
+    <div className={styles.avatarSlot}>
+      <div className={styles.avatarFrame}>
+        <Avatar
+          name={name}
+          url={url || undefined}
+          size={34}
+          ariaLabel={`查看 ${name} 的资料`}
+          onClick={onClick}
+        />
+        <span
+          className={`${styles.presenceDot} ${styles[presenceTone]}`}
+          aria-label={`${name} 当前状态：${presenceLabel}`}
+        />
+      </div>
     </div>
   );
 }

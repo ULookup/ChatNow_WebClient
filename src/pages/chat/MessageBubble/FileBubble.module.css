@@ -1,0 +1,68 @@
+.fileBubble {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 9px;
+  min-width: min(260px, 62vw);
+}
+
+.fileIcon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(48, 112, 255, 0.12);
+  color: currentColor;
+  font-size: 17px;
+}
+
+.fileMeta {
+  min-width: 0;
+}
+
+.fileName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.fileSize {
+  margin-top: 2px;
+  font-size: 11px;
+  opacity: 0.68;
+}
+
+.downloadBtn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.28);
+  color: currentColor;
+  cursor: pointer;
+  transition:
+    transform var(--motion-spring),
+    background var(--motion-fast),
+    opacity var(--motion-fast);
+}
+
+.downloadBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.downloadBtn:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.error {
+  grid-column: 2 / -1;
+  color: var(--danger);
+  font-size: 11px;
+}

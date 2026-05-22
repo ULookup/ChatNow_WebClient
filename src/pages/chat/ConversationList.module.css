@@ -128,6 +128,31 @@
   pointer-events: none;
 }
 
+.searchState {
+  position: absolute;
+  right: 27px;
+  top: 17px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 6px;
+  color: var(--accent);
+  background: rgba(48, 112, 255, 0.09);
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 18px;
+  pointer-events: none;
+}
+
+.searchBar:has(.searchState) .shortcut {
+  opacity: 0;
+}
+
+.searchHint {
+  margin: -4px 16px 8px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
 .searchInput::placeholder {
   color: var(--text-muted);
 }

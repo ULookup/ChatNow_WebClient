@@ -64,6 +64,10 @@
   flex-shrink: 0;
 }
 
+.fileInput {
+  display: none;
+}
+
 .editor {
   flex: 1;
   min-height: 24px;
@@ -85,6 +89,17 @@
   --icon-button-size: 38px;
   border-radius: 13px;
   flex-shrink: 0;
+}
+
+.uploadHint {
+  margin: 8px 6px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  animation: replyIn var(--motion-spring);
+}
+
+.uploadError {
+  color: var(--danger);
 }
 
 @keyframes replyIn {

@@ -18,7 +18,7 @@ export const usePresenceStore = create<PresenceState>((set) => ({
 
   batchGet: async (userIds) => {
     try {
-      const rsp = await PresenceService.batchGet({ requestId: crypto.randomUUID(), userIds } as any);
+      const rsp = await PresenceService.batchGet({ requestId: crypto.randomUUID(), userIds });
       if (rsp.header?.success && rsp.presences) {
         set((s) => ({ presences: { ...s.presences, ...rsp.presences } }));
       }
@@ -29,7 +29,7 @@ export const usePresenceStore = create<PresenceState>((set) => ({
 
   subscribe: async (userIds) => {
     try {
-      await PresenceService.subscribe({ requestId: crypto.randomUUID(), subscribeUserIds: userIds } as any);
+      await PresenceService.subscribe({ requestId: crypto.randomUUID(), subscribeUserIds: userIds });
     } catch {
       /* network error */
     }

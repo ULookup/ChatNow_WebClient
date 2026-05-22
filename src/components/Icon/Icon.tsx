@@ -8,6 +8,7 @@ export type IconName =
   | 'search'
   | 'pin'
   | 'bell-off'
+  | 'eye-off'
   | 'smile'
   | 'paperclip'
   | 'send'
@@ -22,9 +23,11 @@ export type IconName =
   | 'copy'
   | 'forward'
   | 'rotate-ccw'
+  | 'trash'
   | 'panel-right'
   | 'file-stack'
-  | 'arrow-down';
+  | 'arrow-down'
+  | 'arrow-up';
 
 interface IconProps {
   name: IconName;
@@ -122,6 +125,14 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
       <path d="M5.6 8.5c-.1.34-.1.67-.1 1 0 2.7-1 4.1-2 5.5h8" />
     </>
   ),
+  'eye-off': (
+    <>
+      <path d="M3 3 21 21" />
+      <path d="M10.6 10.6A2 2 0 0 0 13.4 13.4" />
+      <path d="M9.5 5.5A9.8 9.8 0 0 1 12 5c5 0 8.5 4.4 10 7a15.7 15.7 0 0 1-2.2 3.1" />
+      <path d="M6.4 6.5A15.7 15.7 0 0 0 2 12c1.5 2.6 5 7 10 7 1.5 0 2.9-.4 4.1-1" />
+    </>
+  ),
   smile: (
     <>
       <circle cx="12" cy="12" r="9" />
@@ -205,6 +216,15 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
       <path d="M3 4v6h6" />
     </>
   ),
+  trash: (
+    <>
+      <path d="M3 6h18" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M19 6 18 20a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </>
+  ),
   'panel-right': (
     <>
       <rect x="3" y="4" width="18" height="16" rx="2" />
@@ -224,6 +244,12 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
     <>
       <path d="M12 5v14" />
       <path d="m19 12-7 7-7-7" />
+    </>
+  ),
+  'arrow-up': (
+    <>
+      <path d="M12 19V5" />
+      <path d="m5 12 7-7 7 7" />
     </>
   ),
 };

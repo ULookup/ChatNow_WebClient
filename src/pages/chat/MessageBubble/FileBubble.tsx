@@ -1,10 +1,16 @@
+import { useState } from 'react';
+import { resolveDownloadUrl } from '@/services/mediaDownload';
+import styles from './FileBubble.module.css';
+
 interface Props {
   fileId?: string;
   fileName?: string;
   fileSize?: bigint;
 }
 
-export function FileBubble({ fileName, fileSize }: Props) {
+export function FileBubble({ fileId, fileName, fileSize }: Props) {
+  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState('');
   let sizeStr = '';
   if (fileSize != null) {
     const n = Number(fileSize);
@@ -15,15 +21,37 @@ export function FileBubble({ fileName, fileSize }: Props) {
     }
   }
 
+  const handleDownload = async () => {
+    if (!fileId || downloading) return;
+    setDownloading(true);
+    setError('');
+    try {
+      const url = await resolveDownloadUrl(fileId);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch {
+      setError('下载链接获取失败');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ fontSize: 18, flexShrink: 0 }}>📄</span>
-      <div style={{ fontSize: 11, minWidth: 0 }}>
-        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {fileName ?? '文件'}
-        </div>
-        {sizeStr && <div style={{ opacity: 0.6 }}>{sizeStr}</div>}
+    <div className={styles.fileBubble}>
+      <span className={styles.fileIcon}>📄</span>
+      <div className={styles.fileMeta}>
+        <div className={styles.fileName}>{fileName ?? '文件'}</div>
+        {sizeStr && <div className={styles.fileSize}>{sizeStr}</div>}
       </div>
+      <button
+        type="button"
+        className={styles.downloadBtn}
+        aria-label={`下载 ${fileName ?? '文件'}`}
+        disabled={!fileId || downloading}
+        onClick={handleDownload}
+      >
+        ↓
+      </button>
+      {error && <div className={styles.error}>{error}</div>}
     </div>
   );
 }

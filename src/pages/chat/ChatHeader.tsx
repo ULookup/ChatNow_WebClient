@@ -8,9 +8,10 @@ interface Props {
   conv: Conversation;
   searchActive?: boolean;
   onToggleSearch?: () => void;
+  onClearConversation?: () => void;
 }
 
-export function ChatHeader({ conv, searchActive = false, onToggleSearch }: Props) {
+export function ChatHeader({ conv, searchActive = false, onToggleSearch, onClearConversation }: Props) {
   const openRightPanel = useUIStore(s => s.openRightPanel);
   const memberLabel = conv.memberCount > 0 ? `${conv.memberCount} 位成员` : '私密会话';
 
@@ -32,6 +33,19 @@ export function ChatHeader({ conv, searchActive = false, onToggleSearch }: Props
           active={searchActive}
           className={styles.actionBtn}
           onClick={onToggleSearch}
+        />
+        <IconButton
+          icon="pin"
+          label="查看置顶消息"
+          className={styles.actionBtn}
+          onClick={() => openRightPanel('pinned_messages')}
+        />
+        <IconButton
+          icon="trash"
+          label="清空当前会话消息"
+          variant="danger"
+          className={styles.actionBtn}
+          onClick={onClearConversation}
         />
         <IconButton
           icon="panel-right"

@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { resolveDownloadUrl } from '@/services/mediaDownload';
+import styles from './ImageBubble.module.css';
 
 interface Props {
   fileId?: string;
@@ -9,39 +11,43 @@ interface Props {
 
 export function ImageBubble({ fileId, thumbnailUrl }: Props) {
   const [url, setUrl] = useState<string | undefined>(thumbnailUrl || undefined);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (fileId && !url) {
-      // TODO: use MediaService to get download URL in Task 14
-      void setUrl;
+    let cancelled = false;
+    if (fileId && !url && !error) {
+      resolveDownloadUrl(fileId)
+        .then((downloadUrl) => {
+          if (!cancelled) setUrl(downloadUrl);
+        })
+        .catch(() => {
+          if (!cancelled) setError(true);
+        });
     }
-  }, [fileId, url]);
+    return () => {
+      cancelled = true;
+    };
+  }, [error, fileId, url]);
+
+  const handleOpen = () => {
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   if (!url) {
     return (
-      <div
-        style={{
-          width: 200,
-          height: 150,
-          background: 'rgba(0,0,0,0.05)',
-          borderRadius: 8,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 12,
-          color: 'var(--text-muted)',
-        }}
-      >
-        图片加载中...
+      <div className={`${styles.placeholder} ${error ? styles.error : ''}`}>
+        {error ? '图片加载失败' : '图片加载中...'}
       </div>
     );
   }
 
   return (
-    <img
-      src={url}
-      style={{ maxWidth: 300, maxHeight: 250, borderRadius: 8 }}
-      alt=""
-    />
+    <button type="button" className={styles.imageWrap} aria-label="查看图片消息" onClick={handleOpen}>
+      <img
+        src={url}
+        className={styles.image}
+        alt="图片消息"
+      />
+    </button>
   );
 }

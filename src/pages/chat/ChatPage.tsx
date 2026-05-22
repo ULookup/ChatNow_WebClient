@@ -7,7 +7,7 @@ import { ContextPanel } from '@/pages/context-panel/ContextPanel';
 import { useChatStore } from '@/stores/chatStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
-import { ConversationStatus, ConversationType, MemberRole, type Conversation } from '@/proto/conversation/conversation_service';
+import { ConversationStatus, ConversationType, MemberRole, type Conversation, type MemberItem } from '@/proto/conversation/conversation_service';
 import { MessageStatus, MessageType, type Message } from '@/proto/message/message_types';
 
 export function ChatPage() {
@@ -100,6 +100,7 @@ function seedPreviewData() {
     createPreviewMessage(1n, 'preview-product', 'u-2', '这版主界面保留四栏结构，但按钮状态更清楚。', now - 600000n, 1n),
     {
       ...createPreviewMessage(2n, 'preview-product', 'preview-user', '我想重点看看按钮 hover、按压和发送按钮的光扫。', now - 420000n, 2n),
+      isPinned: true,
       reactions: [
         { emoji: '👍', count: 3, recentUserIds: ['preview-user', 'u-2', 'u-3'], selfReacted: true },
       ],
@@ -110,6 +111,11 @@ function seedPreviewData() {
         { emoji: '✨', count: 2, recentUserIds: ['preview-user', 'u-2'], selfReacted: false },
       ],
     },
+  ];
+  const previewMembers: MemberItem[] = [
+    createPreviewMember('preview-user', 'Preview', MemberRole.OWNER, now - 86400000n),
+    createPreviewMember('u-2', 'Designer', MemberRole.ADMIN, now - 72000000n),
+    createPreviewMember('u-3', 'PM', MemberRole.MEMBER, now - 70000000n),
   ];
 
   useAuthStore.setState({
@@ -130,11 +136,32 @@ function seedPreviewData() {
     conversations,
     activeConversationId: 'preview-product',
     messagesByConv: { 'preview-product': messages },
+    pinnedMessagesByConv: { 'preview-product': messages.filter((message) => message.isPinned) },
+    membersByConv: { 'preview-product': previewMembers },
     unreadCounts: { 'preview-product': 3, 'preview-design': 6 },
     lastReadSeq: { 'preview-product': 2, 'preview-design': 12 },
     loading: false,
   });
   useUIStore.setState({ rightPanelOpen: false, rightPanelType: 'group_info' });
+}
+
+function createPreviewMember(
+  userId: string,
+  nickname: string,
+  role: MemberRole,
+  joinedAtMs: bigint,
+): MemberItem {
+  return {
+    userInfo: {
+      userId,
+      nickname,
+      avatarUrl: '',
+      bio: '',
+      phone: '',
+    },
+    role,
+    joinTimeMs: joinedAtMs,
+  };
 }
 
 function createPreviewMessage(

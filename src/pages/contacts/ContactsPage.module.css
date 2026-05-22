@@ -21,8 +21,58 @@
   text-transform: uppercase;
 }
 
+.friendSection {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.friendSearch {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.friendSearch input {
+  width: 100%;
+  height: 36px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.68);
+  color: var(--text-primary);
+  outline: none;
+  font-size: 13px;
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast),
+    background var(--motion-fast);
+}
+
+.searchState {
+  position: absolute;
+  right: 10px;
+  top: 9px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.searchHint {
+  margin: -3px 2px 8px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.friendSearch input:focus {
+  border-color: var(--accent-border);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 0 0 3px rgba(48, 112, 255, 0.1);
+}
+
 .friendList {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 
@@ -68,6 +118,39 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.friendAvatar {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.friendPresence {
+  position: absolute;
+  right: -2px;
+  bottom: -1px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid rgba(255, 255, 255, 0.94);
+  border-radius: 999px;
+  background: #29c36a;
+  box-shadow: 0 0 0 2px rgba(41, 195, 106, 0.13);
+}
+
+.friendPresence.away {
+  background: #f5b942;
+  box-shadow: 0 0 0 2px rgba(245, 185, 66, 0.14);
+}
+
+.friendPresence.busy {
+  background: #f15b5b;
+  box-shadow: 0 0 0 2px rgba(241, 91, 91, 0.14);
+}
+
+.friendPresence.offline,
+.friendPresence.unknown {
+  background: #a7b0bf;
+  box-shadow: 0 0 0 2px rgba(125, 138, 158, 0.13);
 }
 
 .friendAction {
@@ -165,6 +248,80 @@
   color: var(--text-muted);
 }
 
+.requestError {
+  color: var(--danger);
+  font-weight: 650;
+}
+
 .requestAction {
   --icon-button-size: 34px;
+}
+
+.contentStack {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.blockedSection {
+  padding: 0 22px 22px;
+  width: 100%;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0 12px;
+}
+
+.sectionTitle {
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+
+.compactEmpty {
+  min-height: 74px;
+  border: 1px dashed var(--border-subtle);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.3);
+  font-size: 12px;
+}
+
+.blockedList {
+  display: grid;
+  gap: 8px;
+}
+
+.blockedItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 9px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: var(--shadow-subtle);
+}
+
+.blockedItem span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.blockedAction {
+  --icon-button-size: 30px;
 }
