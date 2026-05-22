@@ -47,4 +47,19 @@ describe('MessageService', () => {
       auth: 'JWT_REQUIRED',
     }));
   });
+
+  it('calls the batch get by id endpoint', async () => {
+    const { MessageService } = await import('./message');
+    rpcCall.mockResolvedValue({ header: { success: true }, messages: [] });
+
+    await MessageService.getById({
+      requestId: 'req-4',
+      messageIds: [42n, 43n],
+    });
+
+    expect(rpcCall).toHaveBeenCalledWith(expect.objectContaining({
+      path: '/service/message/get_by_id',
+      auth: 'JWT_REQUIRED',
+    }));
+  });
 });

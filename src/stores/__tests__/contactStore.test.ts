@@ -10,6 +10,7 @@ const removeFriend = vi.fn().mockResolvedValue({ header: { success: true } });
 const blockUser = vi.fn().mockResolvedValue({ header: { success: true } });
 const unblockUser = vi.fn().mockResolvedValue({ header: { success: true } });
 const searchFriends = vi.fn().mockResolvedValue({ header: { success: true }, userInfo: [] });
+const searchUsers = vi.fn().mockResolvedValue({ header: { success: true }, userInfo: [] });
 
 vi.mock('@/services/relationship', () => ({
   RelationshipService: {
@@ -22,6 +23,12 @@ vi.mock('@/services/relationship', () => ({
     blockUser,
     unblockUser,
     searchFriends,
+  },
+}));
+
+vi.mock('@/services/identity', () => ({
+  IdentityService: {
+    searchUsers,
   },
 }));
 
@@ -38,6 +45,12 @@ describe('contactStore relationship actions', () => {
         loading: false,
         failed: false,
       },
+      userSearch: {
+        query: '',
+        users: [],
+        loading: false,
+        failed: false,
+      },
       loading: false,
     });
     listFriends.mockClear();
@@ -49,7 +62,9 @@ describe('contactStore relationship actions', () => {
     blockUser.mockClear();
     unblockUser.mockClear();
     searchFriends.mockClear();
+    searchUsers.mockClear();
     searchFriends.mockResolvedValue({ header: { success: true }, userInfo: [] });
+    searchUsers.mockResolvedValue({ header: { success: true }, userInfo: [] });
     blockUser.mockResolvedValue({ header: { success: true } });
     unblockUser.mockResolvedValue({ header: { success: true } });
     removeFriend.mockResolvedValue({ header: { success: true } });
@@ -85,6 +100,41 @@ describe('contactStore relationship actions', () => {
     expect(useContactStore.getState().friendSearch).toMatchObject({
       query: 'Ada',
       friends: [],
+      loading: false,
+      failed: true,
+    });
+  });
+
+  it('searches global users through IdentityService and stores backend results', async () => {
+    const { useContactStore } = await import('@/stores/contactStore');
+    const result = createUser('user-9', 'Remote User');
+    searchUsers.mockResolvedValue({
+      header: { success: true },
+      userInfo: [result],
+    });
+
+    await useContactStore.getState().searchUsers('remote');
+
+    expect(searchUsers).toHaveBeenCalledWith(expect.objectContaining({
+      searchKey: 'remote',
+    }));
+    expect(useContactStore.getState().userSearch).toEqual({
+      query: 'remote',
+      users: [result],
+      loading: false,
+      failed: false,
+    });
+  });
+
+  it('marks failed global user search separately from friend search', async () => {
+    const { useContactStore } = await import('@/stores/contactStore');
+    searchUsers.mockRejectedValue(new Error('offline'));
+
+    await useContactStore.getState().searchUsers('remote');
+
+    expect(useContactStore.getState().userSearch).toMatchObject({
+      query: 'remote',
+      users: [],
       loading: false,
       failed: true,
     });

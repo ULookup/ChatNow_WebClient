@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { UserInfo } from '@/proto/common/types';
 import type { FriendEvent } from '@/proto/relationship/relationship_service';
 import { RelationshipService } from '@/services/relationship';
+import { IdentityService } from '@/services/identity';
 
 export interface ContactState {
   friends: UserInfo[];
@@ -13,12 +14,19 @@ export interface ContactState {
     loading: boolean;
     failed: boolean;
   };
+  userSearch: {
+    query: string;
+    users: UserInfo[];
+    loading: boolean;
+    failed: boolean;
+  };
   loading: boolean;
 
   loadFriends: () => Promise<void>;
   loadPending: () => Promise<void>;
   loadBlocked: () => Promise<void>;
   searchFriends: (keyword: string) => Promise<void>;
+  searchUsers: (keyword: string) => Promise<void>;
   sendFriendRequest: (respondentId: string) => Promise<void>;
   handleFriendRequest: (eventId: string, agree: boolean, applyUserId: string) => Promise<string | undefined>;
   removeFriend: (peerId: string) => Promise<void>;
@@ -33,6 +41,12 @@ export const useContactStore = create<ContactState>((set) => ({
   friendSearch: {
     query: '',
     friends: [],
+    loading: false,
+    failed: false,
+  },
+  userSearch: {
+    query: '',
+    users: [],
     loading: false,
     failed: false,
   },
@@ -116,6 +130,57 @@ export const useContactStore = create<ContactState>((set) => ({
         friendSearch: {
           query,
           friends: [],
+          loading: false,
+          failed: true,
+        },
+      });
+    }
+  },
+
+  searchUsers: async (keyword) => {
+    const query = keyword.trim();
+    if (!query) {
+      set({
+        userSearch: {
+          query: '',
+          users: [],
+          loading: false,
+          failed: false,
+        },
+      });
+      return;
+    }
+
+    set({
+      userSearch: {
+        query,
+        users: [],
+        loading: true,
+        failed: false,
+      },
+    });
+
+    try {
+      const rsp = await IdentityService.searchUsers({
+        requestId: crypto.randomUUID(),
+        searchKey: query,
+      });
+      if (!rsp.header?.success) {
+        throw new Error(rsp.header?.errorMessage || 'Search users failed');
+      }
+      set({
+        userSearch: {
+          query,
+          users: rsp.userInfo,
+          loading: false,
+          failed: false,
+        },
+      });
+    } catch {
+      set({
+        userSearch: {
+          query,
+          users: [],
           loading: false,
           failed: true,
         },

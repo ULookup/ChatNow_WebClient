@@ -4,9 +4,19 @@ import { MessageStatus, MessageType, type Message } from '@/proto/message/messag
 import { PresenceState } from '@/proto/presence/presence_service';
 
 const resolveDownloadUrl = vi.fn();
+const transcribeAudioFile = vi.fn();
+const getChatFileInfo = vi.fn();
 
 vi.mock('@/services/mediaDownload', () => ({
   resolveDownloadUrl,
+}));
+
+vi.mock('@/services/audioTranscription', () => ({
+  transcribeAudioFile,
+}));
+
+vi.mock('@/services/mediaMetadata', () => ({
+  getChatFileInfo,
 }));
 
 const textMessage: Message = {
@@ -135,6 +145,8 @@ describe('MessageBubble', () => {
     cleanup();
     vi.unstubAllGlobals();
     resolveDownloadUrl.mockReset();
+    transcribeAudioFile.mockReset();
+    getChatFileInfo.mockReset();
   });
 
   it('stores a reply target when the reply action is clicked', async () => {
@@ -191,6 +203,47 @@ describe('MessageBubble', () => {
     });
   });
 
+  it('hydrates missing file metadata through the media file info endpoint', async () => {
+    getChatFileInfo.mockResolvedValue({
+      fileId: 'file-1',
+      fileName: 'backend-brief.pdf',
+      fileSize: 2_097_152n,
+      mimeType: 'application/pdf',
+      uploadedAtMs: 1_716_000_000_000n,
+    });
+    const [{ useAuthStore }, { MessageBubble }] = await Promise.all([
+      import('@/stores/authStore'),
+      import('./MessageBubble'),
+    ]);
+    useAuthStore.setState({ userId: 'me' });
+
+    render(
+      <MessageBubble
+        message={{
+          ...fileMessage,
+          content: {
+            type: MessageType.FILE,
+            body: {
+              oneofKind: 'file',
+              file: {
+                fileId: 'file-1',
+                fileName: '',
+                fileSize: 0n,
+                mimeType: '',
+              },
+            },
+          },
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(getChatFileInfo).toHaveBeenCalledWith('file-1');
+      expect(screen.getByText('backend-brief.pdf')).toBeTruthy();
+      expect(screen.getByText('2.0MB')).toBeTruthy();
+    });
+  });
+
   it('requests a download URL to render image messages without a thumbnail URL', async () => {
     resolveDownloadUrl.mockResolvedValue('https://download.example/image-1.jpg');
     const [{ useAuthStore }, { MessageBubble }] = await Promise.all([
@@ -244,6 +297,23 @@ describe('MessageBubble', () => {
       expect(open).toHaveBeenCalledWith('https://download.example/audio-1.m4a', '_blank', 'noopener,noreferrer');
     });
     expect(screen.getByText('0:42')).toBeTruthy();
+  });
+
+  it('transcribes an audio message through the media ASR endpoint', async () => {
+    transcribeAudioFile.mockResolvedValue('会议改到下午三点');
+    const [{ useAuthStore }, { MessageBubble }] = await Promise.all([
+      import('@/stores/authStore'),
+      import('./MessageBubble'),
+    ]);
+    useAuthStore.setState({ userId: 'me' });
+
+    render(<MessageBubble message={audioMessage} />);
+    fireEvent.click(screen.getByRole('button', { name: '语音转文字' }));
+
+    await waitFor(() => {
+      expect(transcribeAudioFile).toHaveBeenCalledWith('audio-1');
+      expect(screen.getByText('会议改到下午三点')).toBeTruthy();
+    });
   });
 
   it('renders reaction groups under the message bubble', async () => {
@@ -349,6 +419,50 @@ describe('MessageBubble', () => {
       avatarUrl: '',
       bio: '界面与动效设计',
     });
+  });
+
+  it('hydrates a reply quote through the message get-by-id API when clicked', async () => {
+    const [{ useAuthStore }, { useChatStore }, { MessageBubble }] = await Promise.all([
+      import('@/stores/authStore'),
+      import('@/stores/chatStore'),
+      import('./MessageBubble'),
+    ]);
+    const fetchMessagesById = vi.fn().mockResolvedValue([{
+      ...textMessage,
+      messageId: 41n,
+      content: {
+        type: MessageType.TEXT,
+        body: {
+          oneofKind: 'text',
+          text: { text: '这是后端补回来的原消息' },
+        },
+      },
+    }]);
+    const originalFetchMessagesById = useChatStore.getState().fetchMessagesById;
+    useAuthStore.setState({ userId: 'me' });
+    useChatStore.setState({ fetchMessagesById });
+
+    render(
+      <MessageBubble
+        message={{
+          ...textMessage,
+          replyTo: {
+            repliedMessageId: 41n,
+            repliedSenderId: 'u-2',
+            repliedMessageType: MessageType.TEXT,
+            contentPreview: '原消息',
+            isRecalled: false,
+          },
+        }}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '查看被回复的消息：原消息' }));
+
+    await waitFor(() => {
+      expect(fetchMessagesById).toHaveBeenCalledWith('conversation-1', [41n]);
+      expect(screen.getByText('这是后端补回来的原消息')).toBeTruthy();
+    });
+    useChatStore.setState({ fetchMessagesById: originalFetchMessagesById });
   });
 
   it('shows sender presence on the message avatar', async () => {
@@ -473,5 +587,33 @@ describe('MessageBubble', () => {
       expect(deleteMessages).toHaveBeenCalledWith('conversation-1', [42n]);
     });
     useChatStore.setState({ deleteMessages: originalDeleteMessages });
+  });
+
+  it('calls the chat store when retrying a failed outgoing message', async () => {
+    const [{ useAuthStore }, { useChatStore }, { MessageBubble }] = await Promise.all([
+      import('@/stores/authStore'),
+      import('@/stores/chatStore'),
+      import('./MessageBubble'),
+    ]);
+    const retryMessage = vi.fn().mockResolvedValue(undefined);
+    const originalRetryMessage = useChatStore.getState().retryMessage;
+    useAuthStore.setState({ userId: 'me' });
+    useChatStore.setState({ retryMessage });
+
+    render(
+      <MessageBubble
+        message={{
+          ...textMessage,
+          senderId: 'me',
+          clientMsgId: 'local-failed-client-1',
+        }}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '重试发送消息' }));
+
+    await waitFor(() => {
+      expect(retryMessage).toHaveBeenCalledWith('conversation-1', 'local-failed-client-1');
+    });
+    useChatStore.setState({ retryMessage: originalRetryMessage });
   });
 });

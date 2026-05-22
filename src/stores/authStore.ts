@@ -4,6 +4,7 @@ import type { AuthTokens } from '@/proto/identity/identity_service';
 import { IdentityService } from '@/services/identity';
 import { setTokens, clearTokens, getAccessToken } from '@/utils/token';
 import { wsClient } from '@/services/ws-client';
+import { buildPhoneCodeCredential, buildUsernamePasswordCredential, normalizePhone } from '@/pages/auth/authCredential';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -14,8 +15,11 @@ interface AuthState {
 
   setAuth: (tokens: AuthTokens, user: UserInfo) => void;
   clearAuth: () => void;
-  login: (nickname: string, password: string, deviceId: string, deviceName: string) => Promise<void>;
-  register: (nickname: string, password: string) => Promise<void>;
+  login: (account: string, password: string, deviceId: string, deviceName: string) => Promise<void>;
+  loginWithPhoneCode: (phone: string, verifyCodeId: string, verifyCode: string, deviceId: string, deviceName: string) => Promise<void>;
+  register: (account: string, password: string, nickname?: string) => Promise<void>;
+  registerWithPhoneCode: (phone: string, verifyCodeId: string, verifyCode: string, nickname: string) => Promise<void>;
+  sendPhoneVerifyCode: (phone: string) => Promise<string>;
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
   getProfile: (userId?: string) => Promise<UserInfo>;
@@ -52,13 +56,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     wsClient.disconnect();
   },
 
-  login: async (nickname, password, deviceId, deviceName) => {
+  login: async (account, password, deviceId, deviceName) => {
     const rsp = await IdentityService.login({
       requestId: crypto.randomUUID(),
-      credential: {
-        oneofKind: 'usernamePwd' as const,
-        usernamePwd: { username: nickname, password },
-      },
+      credential: buildUsernamePasswordCredential(account, password),
       deviceId,
       deviceName,
     });
@@ -71,13 +72,42 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  register: async (nickname, password) => {
+  loginWithPhoneCode: async (phone, verifyCodeId, verifyCode, deviceId, deviceName) => {
+    const rsp = await IdentityService.login({
+      requestId: crypto.randomUUID(),
+      credential: buildPhoneCodeCredential(phone, verifyCodeId, verifyCode),
+      deviceId,
+      deviceName,
+    });
+    if (rsp.header?.success && rsp.tokens && rsp.userInfo) {
+      get().setAuth(rsp.tokens, rsp.userInfo);
+    } else {
+      throw new Error(
+        rsp.header?.errorMessage || `Login failed: ${rsp.header?.errorCode}`,
+      );
+    }
+  },
+
+  register: async (account, password, nickname) => {
     const rsp = await IdentityService.register({
       requestId: crypto.randomUUID(),
-      credential: {
-        oneofKind: 'usernamePwd' as const,
-        usernamePwd: { username: nickname, password },
-      },
+      credential: buildUsernamePasswordCredential(account, password),
+      nickname: nickname?.trim() || account.trim(),
+    });
+    if (rsp.header?.success && rsp.tokens && rsp.userInfo) {
+      get().setAuth(rsp.tokens, rsp.userInfo);
+    } else {
+      throw new Error(
+        rsp.header?.errorMessage ||
+          `Register failed: ${rsp.header?.errorCode}`,
+      );
+    }
+  },
+
+  registerWithPhoneCode: async (phone, verifyCodeId, verifyCode, nickname) => {
+    const rsp = await IdentityService.register({
+      requestId: crypto.randomUUID(),
+      credential: buildPhoneCodeCredential(phone, verifyCodeId, verifyCode),
       nickname,
     });
     if (rsp.header?.success && rsp.tokens && rsp.userInfo) {
@@ -88,6 +118,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           `Register failed: ${rsp.header?.errorCode}`,
       );
     }
+  },
+
+  sendPhoneVerifyCode: async (phone) => {
+    const rsp = await IdentityService.sendVerifyCode({
+      requestId: crypto.randomUUID(),
+      destination: {
+        oneofKind: 'phone',
+        phone: normalizePhone(phone),
+      },
+    });
+    if (rsp.header?.success && rsp.verifyCodeId) {
+      return rsp.verifyCodeId;
+    }
+    throw new Error(rsp.header?.errorMessage || 'Send verify code failed');
   },
 
   logout: async () => {

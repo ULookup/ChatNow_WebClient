@@ -4,6 +4,8 @@ import {
   SyncMessagesRsp,
   GetHistoryReq,
   GetHistoryRsp,
+  GetMessagesByIdReq,
+  GetMessagesByIdRsp,
   SearchMessagesReq,
   SearchMessagesRsp,
   RecallMessageReq,
@@ -50,6 +52,14 @@ export const MessageService = {
       auth: 'JWT_REQUIRED',
       requestBody: GetHistoryReq.toBinary(req),
       responseType: GetHistoryRsp,
+    }),
+
+  getById: (req: GetMessagesByIdReq) =>
+    rpcCall<GetMessagesByIdRsp>({
+      path: '/service/message/get_by_id',
+      auth: 'JWT_REQUIRED',
+      requestBody: GetMessagesByIdReq.toBinary(req),
+      responseType: GetMessagesByIdRsp,
     }),
 
   search: (req: SearchMessagesReq) =>

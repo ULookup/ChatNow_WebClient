@@ -41,6 +41,8 @@ export function MessageBubble({ message, searchQuery = '' }: Props) {
   const pinMessage = useChatStore((s) => s.pinMessage);
   const unpinMessage = useChatStore((s) => s.unpinMessage);
   const deleteMessages = useChatStore((s) => s.deleteMessages);
+  const fetchMessagesById = useChatStore((s) => s.fetchMessagesById);
+  const retryMessage = useChatStore((s) => s.retryMessage);
   const handleMessagePinned = useChatStore((s) => s.handleMessagePinned);
   const handleMessagesDeleted = useChatStore((s) => s.handleMessagesDeleted);
   const isSelf = message.senderId === userId;
@@ -48,6 +50,8 @@ export function MessageBubble({ message, searchQuery = '' }: Props) {
   const [locallyRecalled, setLocallyRecalled] = useState(false);
   const [locallyPinned, setLocallyPinned] = useState(message.isPinned);
   const [locallyDeleted, setLocallyDeleted] = useState(false);
+  const [hydratedReplyPreview, setHydratedReplyPreview] = useState('');
+  const [replyHydrating, setReplyHydrating] = useState(false);
   const isRecalled = locallyRecalled || message.status === MessageStatus.RECALLED;
   const isDeleted = locallyDeleted || message.status === MessageStatus.DELETED;
   const containerClass = `${styles.container} ${isSelf ? styles.self : styles.other}`;
@@ -90,6 +94,25 @@ export function MessageBubble({ message, searchQuery = '' }: Props) {
       addToast('消息已复制', 'success');
     } catch {
       addToast('复制失败，请重试', 'error');
+    }
+  };
+  const handleHydrateReply = async () => {
+    const replyTo = message.replyTo;
+    if (!replyTo || isPreview || replyHydrating) return;
+    setReplyHydrating(true);
+    try {
+      const messages = await fetchMessagesById(message.conversationId, [replyTo.repliedMessageId]);
+      const original = messages.find((item) => item.messageId === replyTo.repliedMessageId);
+      if (original) {
+        setHydratedReplyPreview(getMessageTextPreview(original));
+        addToast('已补全被回复消息', 'success');
+      } else {
+        addToast('未找到被回复消息', 'error');
+      }
+    } catch {
+      addToast('获取被回复消息失败', 'error');
+    } finally {
+      setReplyHydrating(false);
     }
   };
   const handleRecall = async () => {
@@ -138,6 +161,14 @@ export function MessageBubble({ message, searchQuery = '' }: Props) {
     } catch {
       setLocallyDeleted(false);
       addToast('删除失败，请重试', 'error');
+    }
+  };
+  const handleRetry = async () => {
+    try {
+      await retryMessage(message.conversationId, message.clientMsgId);
+      addToast('消息正在重发', 'success');
+    } catch {
+      addToast('重试发送失败，请稍后再试', 'error');
     }
   };
   const applyLocalReaction = (emoji: string) => {
@@ -235,10 +266,16 @@ export function MessageBubble({ message, searchQuery = '' }: Props) {
           className={`${styles.bubble} ${isSelf ? styles.bubbleSelf : styles.bubbleOther}`}
         >
           {message.replyTo && (
-            <div className={styles.replyQuote}>
+            <button
+              type="button"
+              className={styles.replyQuote}
+              aria-label={`查看被回复的消息：${message.replyTo.contentPreview || '消息'}`}
+              disabled={replyHydrating}
+              onClick={handleHydrateReply}
+            >
               <span>回复</span>
-              <strong>{message.replyTo.contentPreview}</strong>
-            </div>
+              <strong>{replyHydrating ? '加载中...' : hydratedReplyPreview || message.replyTo.contentPreview}</strong>
+            </button>
           )}
           {renderBody(content, searchQuery)}
         </div>
@@ -262,7 +299,18 @@ export function MessageBubble({ message, searchQuery = '' }: Props) {
         )}
         <div className={`${styles.messageMeta} ${isSelf ? styles.metaSelf : ''}`}>
           {isSelf && <time>{messageTime}</time>}
-          {isSelf && <MessageStatusIndicator status={message.status} deliveryState={deliveryState} />}
+          {isSelf && deliveryState === 'failed' ? (
+            <button
+              type="button"
+              className={styles.retryButton}
+              aria-label="重试发送消息"
+              onClick={handleRetry}
+            >
+              发送失败，点击重试
+            </button>
+          ) : (
+            isSelf && <MessageStatusIndicator status={message.status} deliveryState={deliveryState} />
+          )}
         </div>
         {reactionTrayOpen && (
           <div className={`${styles.reactionTray} ${isSelf ? styles.reactionTraySelf : ''}`}>

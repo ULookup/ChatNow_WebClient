@@ -11,7 +11,10 @@ export function FriendList() {
   const [query, setQuery] = useState('');
   const friends = useContactStore((s) => s.friends);
   const friendSearch = useContactStore((s) => s.friendSearch);
+  const userSearch = useContactStore((s) => s.userSearch);
   const searchFriends = useContactStore((s) => s.searchFriends);
+  const searchUsers = useContactStore((s) => s.searchUsers);
+  const sendFriendRequest = useContactStore((s) => s.sendFriendRequest);
   const removeFriend = useContactStore((s) => s.removeFriend);
   const blockUser = useContactStore((s) => s.blockUser);
   const presences = usePresenceStore((s) => s.presences);
@@ -33,7 +36,8 @@ export function FriendList() {
   useEffect(() => {
     if (isPreview) return;
     searchFriends(query);
-  }, [isPreview, query, searchFriends]);
+    searchUsers(query);
+  }, [isPreview, query, searchFriends, searchUsers]);
 
   const visibleFriends = useMemo(() => {
     if (queryText && !isPreview && !friendSearch.loading && !friendSearch.failed && friendSearch.query === queryText) {
@@ -48,6 +52,13 @@ export function FriendList() {
       || friend.userId.toLowerCase().includes(keyword)
     ));
   }, [friendSearch, friends, isPreview, queryText]);
+  const visibleUsers = useMemo(() => {
+    if (!queryText || isPreview || userSearch.loading || userSearch.failed || userSearch.query !== queryText) {
+      return [];
+    }
+    const friendIds = new Set(friends.map((friend) => friend.userId));
+    return userSearch.users.filter((user) => !friendIds.has(user.userId));
+  }, [friends, isPreview, queryText, userSearch]);
 
   const openFriendProfile = (friend: typeof friends[number]) => {
     setSelectedUserProfile({
@@ -64,16 +75,19 @@ export function FriendList() {
       <div className={styles.friendSearch}>
         <input
           value={query}
-          placeholder="搜索好友"
-          aria-label="搜索好友"
+          placeholder="搜索好友或全站用户"
+          aria-label="搜索好友或全站用户"
           onChange={(event) => setQuery(event.target.value)}
         />
-        {queryText && !isPreview && friendSearch.loading && (
+        {queryText && !isPreview && (friendSearch.loading || userSearch.loading) && (
           <span className={styles.searchState}>搜索中</span>
         )}
       </div>
       {queryText && !isPreview && friendSearch.failed && (
         <div className={styles.searchHint}>后端搜索暂不可用，已显示本地匹配</div>
+      )}
+      {queryText && !isPreview && userSearch.failed && (
+        <div className={styles.searchHint}>全站用户搜索暂不可用</div>
       )}
       <div className={styles.friendList}>
       {visibleFriends.map((friend) => {
@@ -129,6 +143,35 @@ export function FriendList() {
         </div>
       )}
       </div>
+      {visibleUsers.length > 0 && (
+        <div className={styles.globalResults}>
+          <div className={styles.resultTitle}>全站用户</div>
+          {visibleUsers.map((user) => {
+            const nickname = user.nickname || '未知';
+            return (
+              <div className={styles.friendItem} key={user.userId}>
+                <div className={styles.friendAvatar}>
+                  <Avatar name={nickname} url={user.avatarUrl || undefined} size={28} />
+                </div>
+                <span className={styles.friendName}>{nickname}</span>
+                <IconButton
+                  icon="info"
+                  label={`查看 ${nickname} 资料`}
+                  className={styles.friendAction}
+                  onClick={() => openFriendProfile(user)}
+                />
+                <IconButton
+                  icon="plus"
+                  label={`添加 ${nickname}`}
+                  variant="primary"
+                  className={styles.friendAction}
+                  onClick={() => sendFriendRequest(user.userId)}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
