@@ -17,9 +17,24 @@
 .subtitle { font-size: 13px; color: var(--text-muted); }
 .tabs { display: flex; gap: 8px; margin-bottom: 24px; background: rgba(0,0,0,0.04); border-radius: 10px; padding: 4px; }
 .tab {
+  position: relative;
+  overflow: hidden;
   flex: 1; padding: 8px; border: none; background: transparent;
   border-radius: 8px; font-size: 13px; cursor: pointer;
-  color: var(--text-muted); transition: all 0.2s;
+  color: var(--text-muted);
+  transform: translate3d(0, 0, 0) scale(1);
+  transition:
+    background-color var(--motion-fast),
+    color var(--motion-fast),
+    box-shadow var(--motion-medium),
+    transform var(--motion-spring);
+}
+.tab:hover {
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+.tab:active {
+  transform: translateY(1px) scale(0.98);
 }
 .tabActive {
   background: rgba(255, 255, 255, 0.7);

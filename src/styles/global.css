@@ -1,24 +1,41 @@
 :root {
-  --bg-primary: #e8ecf1;
-  --bg-secondary: #f0f2f5;
-  --glass-bg-heavy: rgba(255, 255, 255, 0.45);
-  --glass-bg-medium: rgba(255, 255, 255, 0.35);
-  --glass-bg-light: rgba(255, 255, 255, 0.2);
+  --bg-primary: #edf2f7;
+  --bg-secondary: #f7f9fc;
+  --glass-bg-heavy: rgba(255, 255, 255, 0.72);
+  --glass-bg-medium: rgba(255, 255, 255, 0.54);
+  --glass-bg-light: rgba(255, 255, 255, 0.34);
   --glass-blur-heavy: blur(24px) saturate(140%);
   --glass-blur-medium: blur(28px) saturate(130%);
   --glass-blur-light: blur(32px) saturate(120%);
-  --glass-border: 1px solid rgba(0, 0, 0, 0.06);
-  --accent: #6366f1;
-  --accent-light: rgba(99, 102, 241, 0.12);
-  --accent-gradient: linear-gradient(135deg, rgba(99,102,241,0.75), rgba(139,92,246,0.7));
-  --text-primary: #222;
-  --text-secondary: #555;
-  --text-muted: #999;
+  --glass-border: 1px solid rgba(42, 57, 79, 0.08);
+  --panel-bg: rgba(255, 255, 255, 0.68);
+  --surface-bg: rgba(255, 255, 255, 0.82);
+  --surface-hover: rgba(48, 112, 255, 0.08);
+  --surface-selected: rgba(48, 112, 255, 0.12);
+  --border-subtle: rgba(42, 57, 79, 0.1);
+  --accent: #3070ff;
+  --accent-soft: rgba(48, 112, 255, 0.12);
+  --accent-light: rgba(48, 112, 255, 0.12);
+  --accent-border: rgba(48, 112, 255, 0.2);
+  --accent-gradient: linear-gradient(135deg, #3070ff, #28b8a5);
+  --text-primary: #172033;
+  --text-secondary: #536175;
+  --text-muted: #8a96a8;
   --text-inverse: #fff;
   --danger: #ef4444;
-  --success: #22c55e;
-  --bubble-self-bg: linear-gradient(135deg, rgba(99,102,241,0.75), rgba(139,92,246,0.7));
-  --bubble-other-bg: rgba(255, 255, 255, 0.65);
+  --danger-soft: rgba(239, 68, 68, 0.08);
+  --success: #16a66a;
+  --success-soft: rgba(22, 166, 106, 0.1);
+  --warning: #d97706;
+  --warning-soft: rgba(217, 119, 6, 0.1);
+  --focus-ring: rgba(48, 112, 255, 0.45);
+  --shadow-soft: 0 18px 52px rgba(35, 49, 68, 0.12);
+  --shadow-subtle: 0 8px 26px rgba(35, 49, 68, 0.08);
+  --motion-fast: 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --motion-medium: 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --motion-spring: 360ms cubic-bezier(0.16, 1, 0.3, 1);
+  --bubble-self-bg: linear-gradient(135deg, #3070ff, #27b8a5);
+  --bubble-other-bg: rgba(255, 255, 255, 0.82);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -27,8 +44,28 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #e8ecf1 0%, #f0f2f5 30%, #f5f6f8 60%, #eaedf2 100%);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(39, 184, 165, 0.16), transparent 28%),
+    radial-gradient(circle at 88% 18%, rgba(48, 112, 255, 0.16), transparent 32%),
+    linear-gradient(135deg, #edf2f7 0%, #f7f9fc 50%, #e8eef6 100%);
   color: var(--text-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

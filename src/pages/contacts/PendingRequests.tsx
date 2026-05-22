@@ -1,77 +1,90 @@
+import { useState } from 'react';
 import { useContactStore } from '@/stores/contactStore';
+import { useChatStore } from '@/stores/chatStore';
+import { useUIStore } from '@/stores/uiStore';
 import { Avatar } from '@/components/Avatar/Avatar';
+import { IconButton } from '@/components/Icon/Icon';
+import styles from './ContactsPage.module.css';
 
 export function PendingRequests() {
+  const [busyEventId, setBusyEventId] = useState<string | null>(null);
+  const [errorEventId, setErrorEventId] = useState<string | null>(null);
   const pendingRequests = useContactStore((s) => s.pendingRequests);
   const handleFriendRequest = useContactStore((s) => s.handleFriendRequest);
+  const openConversation = useChatStore((s) => s.openConversation);
+  const switchModule = useUIStore((s) => s.switchModule);
+
+  const handleRequest = async (eventId: string, agree: boolean, applyUserId: string) => {
+    setBusyEventId(eventId);
+    setErrorEventId(null);
+    try {
+      const newConversationId = await handleFriendRequest(eventId, agree, applyUserId);
+      if (agree && newConversationId) {
+        switchModule('chat');
+        await openConversation(newConversationId);
+      }
+    } catch {
+      setErrorEventId(eventId);
+    } finally {
+      setBusyEventId(null);
+    }
+  };
 
   return (
-    <div style={{ padding: 16 }}>
-      <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>
-        待处理的好友申请
-      </h3>
+    <div className={styles.requests}>
+      <div className={styles.requestsHeader}>
+        <div>
+          <div className={styles.kicker}>Relationships</div>
+          <h2 className={styles.contentTitle}>待处理的好友申请</h2>
+        </div>
+      </div>
       {pendingRequests.length === 0 ? (
-        <div
-          style={{
-            fontSize: 12,
-            color: 'var(--text-muted)',
-            textAlign: 'center',
-            padding: 40,
-          }}
-        >
+        <div className={styles.emptyState}>
           暂无待处理的申请
         </div>
       ) : (
-        pendingRequests.map((event) => (
-          <div
-            key={event.eventId}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '12px 16px',
-              borderRadius: 12,
-              margin: '4px 0',
-              background: 'rgba(255,255,255,0.35)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(0,0,0,0.04)',
-            }}
-          >
-            <Avatar
-              name={event.sender?.nickname || '?'}
-              size={32}
-            />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 500 }}>
-                {event.sender?.nickname || '未知用户'}
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                请求添加你为好友
-              </div>
-            </div>
-            <button
-              style={{
-                padding: '6px 14px',
-                border: 'none',
-                borderRadius: 8,
-                background: 'var(--accent-gradient)',
-                color: '#fff',
-                fontSize: 12,
-                cursor: 'pointer',
-                backdropFilter: 'blur(6px)',
-              }}
-              onClick={() =>
-                handleFriendRequest(
-                  event.eventId,
-                  true,
-                  event.sender?.userId ?? '',
-                )
-              }
+        pendingRequests.map((event) => {
+          const nickname = event.sender?.nickname || '用户';
+          const isBusy = busyEventId === event.eventId;
+          const hasError = errorEventId === event.eventId;
+
+          return (
+            <div
+              key={event.eventId}
+              className={styles.requestItem}
             >
-              同意
-            </button>
-          </div>
-        ))
+              <Avatar
+                name={event.sender?.nickname || '?'}
+                url={event.sender?.avatarUrl || undefined}
+                size={32}
+              />
+              <div className={styles.requestInfo}>
+                <div className={styles.requestName}>
+                  {event.sender?.nickname || '未知用户'}
+                </div>
+                <div className={`${styles.requestMeta} ${hasError ? styles.requestError : ''}`}>
+                  {hasError ? '处理失败，请重试' : '请求添加你为好友'}
+                </div>
+              </div>
+              <IconButton
+                icon="x"
+                label={`拒绝 ${nickname} 的好友申请`}
+                variant="danger"
+                className={styles.requestAction}
+                disabled={isBusy}
+                onClick={() => handleRequest(event.eventId, false, event.sender?.userId ?? '')}
+              />
+              <IconButton
+                icon="check"
+                label={`同意 ${nickname} 的好友申请`}
+                variant="primary"
+                className={styles.requestAction}
+                disabled={isBusy}
+                onClick={() => handleRequest(event.eventId, true, event.sender?.userId ?? '')}
+              />
+            </div>
+          );
+        })
       )}
     </div>
   );

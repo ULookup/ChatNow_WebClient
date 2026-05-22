@@ -7,11 +7,18 @@ export interface ContactState {
   friends: UserInfo[];
   pendingRequests: FriendEvent[];
   blockedUsers: UserInfo[];
+  friendSearch: {
+    query: string;
+    friends: UserInfo[];
+    loading: boolean;
+    failed: boolean;
+  };
   loading: boolean;
 
   loadFriends: () => Promise<void>;
   loadPending: () => Promise<void>;
   loadBlocked: () => Promise<void>;
+  searchFriends: (keyword: string) => Promise<void>;
   sendFriendRequest: (respondentId: string) => Promise<void>;
   handleFriendRequest: (eventId: string, agree: boolean, applyUserId: string) => Promise<string | undefined>;
   removeFriend: (peerId: string) => Promise<void>;
@@ -23,6 +30,12 @@ export const useContactStore = create<ContactState>((set) => ({
   friends: [],
   pendingRequests: [],
   blockedUsers: [],
+  friendSearch: {
+    query: '',
+    friends: [],
+    loading: false,
+    failed: false,
+  },
   loading: false,
 
   loadFriends: async () => {
@@ -59,6 +72,57 @@ export const useContactStore = create<ContactState>((set) => ({
     }
   },
 
+  searchFriends: async (keyword) => {
+    const query = keyword.trim();
+    if (!query) {
+      set({
+        friendSearch: {
+          query: '',
+          friends: [],
+          loading: false,
+          failed: false,
+        },
+      });
+      return;
+    }
+
+    set({
+      friendSearch: {
+        query,
+        friends: [],
+        loading: true,
+        failed: false,
+      },
+    });
+
+    try {
+      const rsp = await RelationshipService.searchFriends({
+        requestId: crypto.randomUUID(),
+        searchKey: query,
+      });
+      if (!rsp.header?.success) {
+        throw new Error(rsp.header?.errorMessage || 'Search friends failed');
+      }
+      set({
+        friendSearch: {
+          query,
+          friends: rsp.userInfo,
+          loading: false,
+          failed: false,
+        },
+      });
+    } catch {
+      set({
+        friendSearch: {
+          query,
+          friends: [],
+          loading: false,
+          failed: true,
+        },
+      });
+    }
+  },
+
   sendFriendRequest: async (respondentId) => {
     await RelationshipService.sendFriendRequest({
       requestId: crypto.randomUUID(),
@@ -88,13 +152,33 @@ export const useContactStore = create<ContactState>((set) => ({
       requestId: crypto.randomUUID(),
       peerId,
     });
-    set((s) => ({ friends: s.friends.filter((f) => f.userId !== peerId) }));
+    set((s) => ({
+      friends: s.friends.filter((f) => f.userId !== peerId),
+      friendSearch: {
+        ...s.friendSearch,
+        friends: s.friendSearch.friends.filter((f) => f.userId !== peerId),
+      },
+    }));
   },
 
   blockUser: async (peerId) => {
     await RelationshipService.blockUser({
       requestId: crypto.randomUUID(),
       peerId,
+    });
+    set((s) => {
+      const blockedFriend = s.friends.find((friend) => friend.userId === peerId);
+      const alreadyBlocked = s.blockedUsers.some((user) => user.userId === peerId);
+      return {
+        friends: s.friends.filter((friend) => friend.userId !== peerId),
+        friendSearch: {
+          ...s.friendSearch,
+          friends: s.friendSearch.friends.filter((friend) => friend.userId !== peerId),
+        },
+        blockedUsers: blockedFriend && !alreadyBlocked
+          ? [...s.blockedUsers, blockedFriend]
+          : s.blockedUsers,
+      };
     });
   },
 
@@ -103,5 +187,8 @@ export const useContactStore = create<ContactState>((set) => ({
       requestId: crypto.randomUUID(),
       peerId,
     });
+    set((s) => ({
+      blockedUsers: s.blockedUsers.filter((user) => user.userId !== peerId),
+    }));
   },
 }));

@@ -2,12 +2,326 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 14px;
+  padding: 18px 14px;
 }
 
 .title {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 12px;
+  font-size: 22px;
+  font-weight: 750;
+  margin-bottom: 14px;
   color: var(--text-primary);
+  letter-spacing: 0;
+}
+
+.kicker {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.friendSection {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.friendSearch {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.friendSearch input {
+  width: 100%;
+  height: 36px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.68);
+  color: var(--text-primary);
+  outline: none;
+  font-size: 13px;
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast),
+    background var(--motion-fast);
+}
+
+.searchState {
+  position: absolute;
+  right: 10px;
+  top: 9px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.searchHint {
+  margin: -3px 2px 8px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.friendSearch input:focus {
+  border-color: var(--accent-border);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 0 0 3px rgba(48, 112, 255, 0.1);
+}
+
+.friendList {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.friendItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  margin: 3px 0;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.48);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  text-align: left;
+  transform: translate3d(0, 0, 0);
+  transition:
+    background-color var(--motion-fast),
+    border-color var(--motion-fast),
+    box-shadow var(--motion-medium),
+    transform var(--motion-spring);
+}
+
+.friendItem:hover {
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 10px 24px rgba(35, 49, 68, 0.08);
+  transform: translate3d(2px, -1px, 0);
+}
+
+.friendItem:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.friendName {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friendAvatar {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.friendPresence {
+  position: absolute;
+  right: -2px;
+  bottom: -1px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid rgba(255, 255, 255, 0.94);
+  border-radius: 999px;
+  background: #29c36a;
+  box-shadow: 0 0 0 2px rgba(41, 195, 106, 0.13);
+}
+
+.friendPresence.away {
+  background: #f5b942;
+  box-shadow: 0 0 0 2px rgba(245, 185, 66, 0.14);
+}
+
+.friendPresence.busy {
+  background: #f15b5b;
+  box-shadow: 0 0 0 2px rgba(241, 91, 91, 0.14);
+}
+
+.friendPresence.offline,
+.friendPresence.unknown {
+  background: #a7b0bf;
+  box-shadow: 0 0 0 2px rgba(125, 138, 158, 0.13);
+}
+
+.friendAction {
+  --icon-button-size: 28px;
+  opacity: 0;
+  transform: translateX(4px) scale(0.92);
+  transition:
+    opacity var(--motion-fast),
+    transform var(--motion-spring);
+}
+
+.friendItem:hover .friendAction,
+.friendItem:focus-within .friendAction {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+
+.empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 24px;
+}
+
+.requests {
+  padding: 22px;
+  width: 100%;
+}
+
+.requestsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.contentTitle {
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.36);
+  font-size: 13px;
+}
+
+.requestItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border-radius: 14px;
+  margin: 8px 0;
+  background: var(--surface-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
+  transform: translate3d(0, 0, 0);
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-medium),
+    transform var(--motion-spring);
+}
+
+.requestItem:hover {
+  border-color: var(--accent-border);
+  box-shadow: var(--shadow-soft);
+  transform: translate3d(0, -2px, 0);
+}
+
+.requestInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.requestName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.requestMeta {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.requestError {
+  color: var(--danger);
+  font-weight: 650;
+}
+
+.requestAction {
+  --icon-button-size: 34px;
+}
+
+.contentStack {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.blockedSection {
+  padding: 0 22px 22px;
+  width: 100%;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0 12px;
+}
+
+.sectionTitle {
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+
+.compactEmpty {
+  min-height: 74px;
+  border: 1px dashed var(--border-subtle);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.3);
+  font-size: 12px;
+}
+
+.blockedList {
+  display: grid;
+  gap: 8px;
+}
+
+.blockedItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 9px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: var(--shadow-subtle);
+}
+
+.blockedItem span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.blockedAction {
+  --icon-button-size: 30px;
 }

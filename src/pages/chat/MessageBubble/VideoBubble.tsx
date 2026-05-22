@@ -1,45 +1,51 @@
+import { useState } from 'react';
+import { resolveDownloadUrl } from '@/services/mediaDownload';
+import styles from './VideoBubble.module.css';
+
 interface Props {
   fileId?: string;
   durationSec?: number;
   thumbnailUrl?: string;
 }
 
-export function VideoBubble({ durationSec }: Props) {
+export function VideoBubble({ fileId, durationSec, thumbnailUrl }: Props) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const hasDuration = durationSec != null;
   const mins = Math.floor((durationSec ?? 0) / 60);
   const secs = (durationSec ?? 0) % 60;
 
+  const handleOpen = async () => {
+    if (!fileId || loading) return;
+    setLoading(true);
+    setError('');
+    try {
+      const url = await resolveDownloadUrl(fileId);
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } catch {
+      setError('视频打开失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div style={{ position: 'relative' }}>
-      <div
-        style={{
-          width: 240,
-          height: 160,
-          background: 'rgba(0,0,0,0.08)',
-          borderRadius: 8,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <span style={{ fontSize: 32 }}>▶️</span>
-      </div>
+    <button
+      type="button"
+      className={styles.videoBubble}
+      aria-label="播放视频消息"
+      disabled={!fileId || loading}
+      onClick={handleOpen}
+    >
+      {thumbnailUrl && <img className={styles.thumbnail} src={thumbnailUrl} alt="" />}
+      <span className={styles.scrim} />
+      <span className={styles.play}>▶</span>
       {hasDuration && (
-        <span
-          style={{
-            position: 'absolute',
-            bottom: 4,
-            right: 4,
-            fontSize: 10,
-            background: 'rgba(0,0,0,0.6)',
-            color: '#fff',
-            padding: '1px 4px',
-            borderRadius: 4,
-          }}
-        >
+        <span className={styles.duration}>
           {mins}:{String(secs).padStart(2, '0')}
         </span>
       )}
-    </div>
+      {error && <span className={styles.error}>{error}</span>}
+    </button>
   );
 }
