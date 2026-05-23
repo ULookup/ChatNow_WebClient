@@ -131,12 +131,31 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  width: 100%;
   margin-bottom: 8px;
   padding: 7px 9px;
+  border: 0;
   border-left: 3px solid currentColor;
   border-radius: 9px;
   background: rgba(255, 255, 255, 0.2);
+  color: inherit;
+  cursor: pointer;
   opacity: 0.82;
+  text-align: left;
+  transition:
+    background var(--motion-fast),
+    opacity var(--motion-fast),
+    transform var(--motion-spring);
+}
+
+.replyQuote:hover:not(:disabled) {
+  opacity: 0.98;
+  transform: translateY(-1px);
+}
+
+.replyQuote:disabled {
+  cursor: wait;
+  opacity: 0.68;
 }
 
 .bubbleOther .replyQuote {
@@ -288,6 +307,30 @@
 .statusFailed {
   color: var(--danger);
   cursor: pointer;
+}
+
+.retryButton {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--danger);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    color var(--motion-fast),
+    transform var(--motion-spring);
+}
+
+.retryButton:hover {
+  color: #d9363e;
+  transform: translateY(-1px);
+}
+
+.retryButton:focus-visible {
+  outline: 2px solid rgba(217, 54, 62, 0.28);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .actions {

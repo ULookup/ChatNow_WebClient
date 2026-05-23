@@ -76,6 +76,12 @@ function seedPreviewContacts() {
       loading: false,
       failed: false,
     },
+    userSearch: {
+      query: '',
+      users: [],
+      loading: false,
+      failed: false,
+    },
     loading: false,
   });
 }

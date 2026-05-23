@@ -17,6 +17,12 @@ describe('FriendList', () => {
         loading: false,
         failed: false,
       },
+      userSearch: {
+        query: '',
+        users: [],
+        loading: false,
+        failed: false,
+      },
     });
     usePresenceStore.setState({ presences: {} });
     useUIStore.setState({
@@ -98,7 +104,7 @@ describe('FriendList', () => {
     });
 
     render(<FriendList />);
-    fireEvent.change(screen.getByPlaceholderText('搜索好友'), { target: { value: '139' } });
+    fireEvent.change(screen.getByPlaceholderText('搜索好友或全站用户'), { target: { value: '139' } });
 
     expect(screen.queryByText('Ada')).toBeNull();
     expect(screen.getByText('Grace')).toBeTruthy();
@@ -135,11 +141,52 @@ describe('FriendList', () => {
     });
 
     render(<FriendList />);
-    fireEvent.change(screen.getByPlaceholderText('搜索好友'), { target: { value: 'Backend' } });
+    fireEvent.change(screen.getByPlaceholderText('搜索好友或全站用户'), { target: { value: 'Backend' } });
 
     expect(await screen.findByText('Backend Ada')).toBeTruthy();
     expect(screen.queryByText('Local Ada')).toBeNull();
     useContactStore.setState({ searchFriends: originalSearchFriends });
+  });
+
+  it('shows global user search results and sends friend requests', async () => {
+    const remoteUser = {
+      userId: 'user-9',
+      nickname: 'Remote Ada',
+      avatarUrl: '',
+      bio: '',
+      phone: '',
+    };
+    const searchUsers = vi.fn().mockImplementation(async () => {
+      useContactStore.setState({
+        userSearch: {
+          query: 'Remote',
+          users: [remoteUser],
+          loading: false,
+          failed: false,
+        },
+      });
+    });
+    const sendFriendRequest = vi.fn().mockResolvedValue(undefined);
+    const originalSearchUsers = useContactStore.getState().searchUsers;
+    const originalSendFriendRequest = useContactStore.getState().sendFriendRequest;
+    useContactStore.setState({
+      friends: [],
+      searchUsers,
+      sendFriendRequest,
+    });
+
+    render(<FriendList />);
+    fireEvent.change(screen.getByPlaceholderText('搜索好友或全站用户'), { target: { value: 'Remote' } });
+
+    expect(await screen.findByText('Remote Ada')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '添加 Remote Ada' }));
+
+    expect(searchUsers).toHaveBeenCalledWith('Remote');
+    expect(sendFriendRequest).toHaveBeenCalledWith('user-9');
+    useContactStore.setState({
+      searchUsers: originalSearchUsers,
+      sendFriendRequest: originalSendFriendRequest,
+    });
   });
 
   it('falls back to local friend filtering when backend search fails', async () => {
@@ -172,7 +219,7 @@ describe('FriendList', () => {
     });
 
     render(<FriendList />);
-    fireEvent.change(screen.getByPlaceholderText('搜索好友'), { target: { value: 'Ada' } });
+    fireEvent.change(screen.getByPlaceholderText('搜索好友或全站用户'), { target: { value: 'Ada' } });
 
     expect(await screen.findByText('Ada')).toBeTruthy();
     expect(screen.queryByText('Grace')).toBeNull();

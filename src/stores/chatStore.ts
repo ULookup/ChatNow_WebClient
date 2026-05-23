@@ -39,8 +39,10 @@ interface ChatState {
   loadConversations: () => Promise<void>;
   openConversation: (convId: string) => Promise<void>;
   sendMessage: (convId: string, content: MessageContent, replyTo?: ReplyRef) => Promise<void>;
+  retryMessage: (convId: string, localClientMsgId: string) => Promise<void>;
   loadHistory: (convId: string, beforeSeq: number) => Promise<void>;
   syncMessages: (convId: string, afterSeq: number) => Promise<void>;
+  fetchMessagesById: (convId: string, messageIds: bigint[]) => Promise<Message[]>;
   searchConversations: (keyword: string) => Promise<void>;
   searchMessages: (convId: string, keyword: string, cursor?: string) => Promise<void>;
   markRead: (convId: string, seq: number) => Promise<void>;
@@ -147,20 +149,40 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   sendMessage: async (convId, content, replyTo) => {
     const clientMsgId = crypto.randomUUID();
-    const rsp = await TransmiteService.send({
-      requestId: crypto.randomUUID(),
-      conversationId: convId,
-      content,
-      clientMsgId,
-      replyTo,
-      mentionedUserIds: [],
-    });
-    if (rsp.header?.success && rsp.message) {
-      get().handleNewMessage(rsp.message);
-    } else {
-      throw new Error(
-        rsp.header?.errorMessage || 'Send message failed',
-      );
+    const senderId = await getCurrentUserId();
+    const localMessage = createLocalOutgoingMessage(convId, content, replyTo, clientMsgId, senderId);
+    set((s) => ({
+      messagesByConv: {
+        ...s.messagesByConv,
+        [convId]: sortMessages([...(s.messagesByConv[convId] ?? []), localMessage]),
+      },
+    }));
+
+    try {
+      const rsp = await sendOutgoingMessage(convId, content, replyTo, clientMsgId);
+      get().handleNewMessage(rsp);
+    } catch (error) {
+      markLocalOutgoingMessage(set, convId, clientMsgId, 'failed');
+      throw error;
+    }
+  },
+
+  retryMessage: async (convId, localClientMsgId) => {
+    const messages = get().messagesByConv[convId] ?? [];
+    const failedMessage = messages.find((message) => message.clientMsgId === localClientMsgId);
+    if (!failedMessage?.content) {
+      throw new Error('Failed message not found');
+    }
+
+    const clientMsgId = getBaseClientMsgId(localClientMsgId);
+    markLocalOutgoingMessage(set, convId, clientMsgId, 'pending');
+
+    try {
+      const rsp = await sendOutgoingMessage(convId, failedMessage.content, failedMessage.replyTo, clientMsgId);
+      get().handleNewMessage(rsp);
+    } catch (error) {
+      markLocalOutgoingMessage(set, convId, clientMsgId, 'failed');
+      throw error;
     }
   },
 
@@ -211,6 +233,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
         },
       });
     }
+  },
+
+  fetchMessagesById: async (convId, messageIds) => {
+    const uniqueIds = [...new Map(messageIds.map(id => [id.toString(), id])).values()];
+    if (uniqueIds.length === 0) return [];
+
+    const rsp = await MessageService.getById({
+      requestId: crypto.randomUUID(),
+      messageIds: uniqueIds,
+    });
+    if (!rsp.header?.success) {
+      throw new Error(rsp.header?.errorMessage || 'Get messages by id failed');
+    }
+
+    const messages = rsp.messages ?? [];
+    if (messages.length > 0) {
+      set((s) => ({
+        messagesByConv: {
+          ...s.messagesByConv,
+          [convId]: mergeMessagesByIdentity(s.messagesByConv[convId] ?? [], messages),
+        },
+      }));
+    }
+    return messages;
   },
 
   searchConversations: async (keyword) => {
@@ -762,11 +808,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
     if (!convId) return;
 
     const existing = get().messagesByConv[convId] ?? [];
-    if (!existing.find(m => m.messageId === msg.messageId)) {
+    const matchingLocalIndex = existing.findIndex((message) => (
+      isSameOutgoingClientMsg(message.clientMsgId, msg.clientMsgId)
+    ));
+    const messageAlreadyExists = existing.some(message => message.messageId === msg.messageId);
+
+    if (matchingLocalIndex !== -1) {
+      const nextMessages = [...existing];
+      nextMessages[matchingLocalIndex] = msg;
       set({
         messagesByConv: {
           ...get().messagesByConv,
-          [convId]: [...existing, msg],
+          [convId]: sortMessages(nextMessages),
+        },
+      });
+    } else if (!messageAlreadyExists) {
+      set({
+        messagesByConv: {
+          ...get().messagesByConv,
+          [convId]: sortMessages([...existing, msg]),
         },
       });
     }
@@ -854,6 +914,102 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 }));
 
+async function sendOutgoingMessage(
+  convId: string,
+  content: MessageContent,
+  replyTo: ReplyRef | undefined,
+  clientMsgId: string,
+): Promise<Message> {
+  const rsp = await TransmiteService.send({
+    requestId: crypto.randomUUID(),
+    conversationId: convId,
+    content,
+    clientMsgId,
+    replyTo,
+    mentionedUserIds: [],
+  });
+  if (rsp.header?.success && rsp.message) {
+    return rsp.message;
+  }
+
+  throw new Error(rsp.header?.errorMessage || 'Send message failed');
+}
+
+function createLocalOutgoingMessage(
+  convId: string,
+  content: MessageContent,
+  replyTo: ReplyRef | undefined,
+  clientMsgId: string,
+  senderId: string,
+): Message {
+  const now = BigInt(Date.now());
+  return {
+    messageId: -now,
+    conversationId: convId,
+    content,
+    senderId,
+    createdAtMs: now,
+    editedAtMs: 0n,
+    seqId: 0n,
+    userSeq: 0n,
+    clientMsgId: toLocalClientMsgId(clientMsgId, 'pending'),
+    status: MessageStatus.NORMAL,
+    replyTo,
+    mentionedUserIds: [],
+    reactions: [],
+    isPinned: false,
+  };
+}
+
+async function getCurrentUserId(): Promise<string> {
+  const { useAuthStore } = await import('@/stores/authStore');
+  return useAuthStore.getState().userId ?? '';
+}
+
+function markLocalOutgoingMessage(
+  set: (partial: Partial<ChatState> | ((state: ChatState) => Partial<ChatState>)) => void,
+  convId: string,
+  clientMsgId: string,
+  state: 'pending' | 'failed',
+) {
+  set((s) => ({
+    messagesByConv: {
+      ...s.messagesByConv,
+      [convId]: (s.messagesByConv[convId] ?? []).map((message) => (
+        isSameOutgoingClientMsg(message.clientMsgId, clientMsgId)
+          ? { ...message, clientMsgId: toLocalClientMsgId(clientMsgId, state) }
+          : message
+      )),
+    },
+  }));
+}
+
+function toLocalClientMsgId(clientMsgId: string, state: 'pending' | 'failed'): string {
+  return `local-${state}-${getBaseClientMsgId(clientMsgId)}`;
+}
+
+function getBaseClientMsgId(clientMsgId: string): string {
+  return clientMsgId.replace(/^local-(pending|failed)-/, '');
+}
+
+function isSameOutgoingClientMsg(a: string, b: string): boolean {
+  return getBaseClientMsgId(a) === getBaseClientMsgId(b);
+}
+
+function sortMessages(messages: Message[]): Message[] {
+  return [...messages].sort((a, b) => {
+    const aSeq = a.seqId ?? 0n;
+    const bSeq = b.seqId ?? 0n;
+    if (aSeq !== 0n || bSeq !== 0n) {
+      if (aSeq < bSeq) return -1;
+      if (aSeq > bSeq) return 1;
+    }
+    if (a.createdAtMs < b.createdAtMs) return -1;
+    if (a.createdAtMs > b.createdAtMs) return 1;
+    return 0;
+  });
+}
+
 function clearConversationLocal(
   set: (partial: Partial<ChatState> | ((state: ChatState) => Partial<ChatState>)) => void,
   get: () => ChatState,
@@ -936,6 +1092,26 @@ function upsertPinnedMessage(messages: Message[], message: Message): Message[] {
   return [pinnedMessage, ...existing].sort((a, b) => {
     if (a.createdAtMs > b.createdAtMs) return -1;
     if (a.createdAtMs < b.createdAtMs) return 1;
+    return 0;
+  });
+}
+
+function mergeMessagesByIdentity(existing: Message[], incoming: Message[]): Message[] {
+  const byId = new Map<string, Message>();
+  for (const message of existing) {
+    byId.set(message.messageId.toString(), message);
+  }
+  for (const message of incoming) {
+    byId.set(message.messageId.toString(), message);
+  }
+
+  return [...byId.values()].sort((a, b) => {
+    const aSeq = a.seqId ?? 0n;
+    const bSeq = b.seqId ?? 0n;
+    if (aSeq < bSeq) return -1;
+    if (aSeq > bSeq) return 1;
+    if (a.createdAtMs < b.createdAtMs) return -1;
+    if (a.createdAtMs > b.createdAtMs) return 1;
     return 0;
   });
 }

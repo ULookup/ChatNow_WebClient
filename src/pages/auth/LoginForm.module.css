@@ -1,4 +1,41 @@
 .form { display: flex; flex-direction: column; gap: 14px; }
+.modeSwitch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.04);
+}
+.modeButton {
+  min-height: 34px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  transition:
+    color var(--motion-fast),
+    background-color var(--motion-fast),
+    transform var(--motion-spring),
+    box-shadow var(--motion-medium);
+}
+.modeButton:hover {
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+.modeButtonActive {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+.codeRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px;
+  gap: 8px;
+}
 .input {
   padding: 12px 16px; border-radius: var(--radius-md); border: var(--glass-border);
   background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(12px);
@@ -59,6 +96,26 @@
 }
 
 .submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.secondary {
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-md);
+  background: rgba(48, 112, 255, 0.1);
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+  transition:
+    background-color var(--motion-fast),
+    transform var(--motion-spring);
+}
+.secondary:hover:not(:disabled) {
+  background: rgba(48, 112, 255, 0.14);
+  transform: translateY(-1px);
+}
+.secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
 .error {
   padding: 10px 14px; border-radius: var(--radius-sm);
   background: rgba(239, 68, 68, 0.1); color: var(--danger);

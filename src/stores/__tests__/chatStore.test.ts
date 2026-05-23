@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConversationStatus, ConversationType, MemberRole, type Conversation } from '@/proto/conversation/conversation_service';
 import { MessageStatus, MessageType, type Message } from '@/proto/message/message_types';
 
@@ -11,6 +11,7 @@ const pin = vi.fn().mockResolvedValue({ header: { success: true } });
 const unpin = vi.fn().mockResolvedValue({ header: { success: true } });
 const listPinned = vi.fn().mockResolvedValue({ header: { success: true }, messages: [] });
 const search = vi.fn().mockResolvedValue({ header: { success: true }, messages: [], hasMore: false, nextCursor: '' });
+const getById = vi.fn().mockResolvedValue({ header: { success: true }, messages: [] });
 const deleteMessages = vi.fn().mockResolvedValue({ header: { success: true } });
 const clearConversation = vi.fn().mockResolvedValue({ header: { success: true } });
 const updateReadAck = vi.fn().mockResolvedValue({ header: { success: true } });
@@ -25,6 +26,7 @@ const addMembers = vi.fn().mockResolvedValue({ header: { success: true } });
 const removeMembers = vi.fn().mockResolvedValue({ header: { success: true } });
 const changeRole = vi.fn().mockResolvedValue({ header: { success: true } });
 const transferOwner = vi.fn().mockResolvedValue({ header: { success: true } });
+const transmitSend = vi.fn();
 
 vi.mock('@/services/conversation', () => ({
   ConversationService: {
@@ -52,6 +54,7 @@ vi.mock('@/services/message', () => ({
     unpin,
     listPinned,
     search,
+    getById,
     delete: deleteMessages,
     clearConversation,
     updateReadAck,
@@ -61,6 +64,12 @@ vi.mock('@/services/message', () => ({
 vi.mock('@/services/presence', () => ({
   PresenceService: {
     sendTyping,
+  },
+}));
+
+vi.mock('@/services/transmite', () => ({
+  TransmiteService: {
+    send: transmitSend,
   },
 }));
 
@@ -110,6 +119,16 @@ function createConversation(draft = ''): Conversation {
 }
 
 describe('chatStore reactions', () => {
+  beforeEach(() => {
+    const storage = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => storage.set(key, value),
+      removeItem: (key: string) => storage.delete(key),
+      clear: () => storage.clear(),
+    });
+  });
+
   afterEach(async () => {
     const { useChatStore } = await import('@/stores/chatStore');
     useChatStore.setState({
@@ -139,6 +158,7 @@ describe('chatStore reactions', () => {
     unpin.mockClear();
     listPinned.mockClear();
     search.mockClear();
+    getById.mockClear();
     deleteMessages.mockClear();
     clearConversation.mockClear();
     updateReadAck.mockClear();
@@ -154,8 +174,10 @@ describe('chatStore reactions', () => {
     removeMembers.mockClear();
     changeRole.mockClear();
     transferOwner.mockClear();
+    transmitSend.mockClear();
     listPinned.mockResolvedValue({ header: { success: true }, messages: [] });
     search.mockResolvedValue({ header: { success: true }, messages: [], hasMore: false, nextCursor: '' });
+    getById.mockResolvedValue({ header: { success: true }, messages: [] });
     clearConversation.mockResolvedValue({ header: { success: true } });
     getReactions.mockResolvedValue({ header: { success: true }, reactions: [] });
     updateReadAck.mockResolvedValue({ header: { success: true } });
@@ -169,6 +191,78 @@ describe('chatStore reactions', () => {
     removeMembers.mockResolvedValue({ header: { success: true } });
     changeRole.mockResolvedValue({ header: { success: true } });
     transferOwner.mockResolvedValue({ header: { success: true } });
+    transmitSend.mockReset();
+    vi.unstubAllGlobals();
+  });
+
+  it('inserts a pending local message before send and replaces it with the server message on success', async () => {
+    const [{ useChatStore }, { useAuthStore }] = await Promise.all([
+      import('@/stores/chatStore'),
+      import('@/stores/authStore'),
+    ]);
+    useAuthStore.setState({ userId: 'me' });
+    transmitSend.mockImplementation(async (req) => ({
+      header: { success: true },
+      message: {
+        ...createMessage(),
+        messageId: 99n,
+        senderId: 'me',
+        clientMsgId: req.clientMsgId,
+        content: req.content,
+      },
+    }));
+
+    await useChatStore.getState().sendMessage('conversation-1', {
+      type: MessageType.TEXT,
+      body: { oneofKind: 'text', text: { text: 'hello pending' } },
+    });
+
+    const messages = useChatStore.getState().messagesByConv['conversation-1'];
+    expect(messages).toHaveLength(1);
+    expect(messages[0].messageId).toBe(99n);
+    expect(messages[0].clientMsgId.startsWith('local-pending-')).toBe(false);
+    expect(transmitSend).toHaveBeenCalledWith(expect.objectContaining({
+      conversationId: 'conversation-1',
+      clientMsgId: messages[0].clientMsgId,
+    }));
+  });
+
+  it('marks the optimistic message failed when sending fails and retries with the same client message id', async () => {
+    const [{ useChatStore }, { useAuthStore }] = await Promise.all([
+      import('@/stores/chatStore'),
+      import('@/stores/authStore'),
+    ]);
+    useAuthStore.setState({ userId: 'me' });
+    transmitSend.mockRejectedValueOnce(new Error('offline'));
+
+    await expect(useChatStore.getState().sendMessage('conversation-1', {
+      type: MessageType.TEXT,
+      body: { oneofKind: 'text', text: { text: 'retry me' } },
+    })).rejects.toThrow('offline');
+
+    const failedMessage = useChatStore.getState().messagesByConv['conversation-1'][0];
+    expect(failedMessage.clientMsgId.startsWith('local-failed-')).toBe(true);
+    const firstClientMsgId = transmitSend.mock.calls[0][0].clientMsgId;
+    transmitSend.mockResolvedValueOnce({
+      header: { success: true },
+      message: {
+        ...createMessage(),
+        messageId: 100n,
+        senderId: 'me',
+        clientMsgId: firstClientMsgId,
+        content: failedMessage.content,
+      },
+    });
+
+    await useChatStore.getState().retryMessage('conversation-1', failedMessage.clientMsgId);
+
+    expect(transmitSend).toHaveBeenLastCalledWith(expect.objectContaining({
+      clientMsgId: firstClientMsgId,
+    }));
+    expect(useChatStore.getState().messagesByConv['conversation-1'][0]).toMatchObject({
+      messageId: 100n,
+      clientMsgId: firstClientMsgId,
+    });
   });
 
   it('adds a reaction through MessageService and updates the local message', async () => {
@@ -367,6 +461,26 @@ describe('chatStore reactions', () => {
       nextCursor: 'cursor-2',
       loading: false,
     });
+  });
+
+  it('fetches messages by id and merges them into the conversation cache', async () => {
+    const { useChatStore } = await import('@/stores/chatStore');
+    const existing = createMessage();
+    const fetched = { ...createMessage(), messageId: 88n, seqId: 5n, clientMsgId: 'server-88' };
+    getById.mockResolvedValue({
+      header: { success: true },
+      messages: [fetched],
+    });
+    useChatStore.setState({
+      messagesByConv: { 'conversation-1': [existing] },
+    });
+
+    await expect(useChatStore.getState().fetchMessagesById('conversation-1', [88n])).resolves.toEqual([fetched]);
+
+    expect(getById).toHaveBeenCalledWith(expect.objectContaining({
+      messageIds: [88n],
+    }));
+    expect(useChatStore.getState().messagesByConv['conversation-1'].map(message => message.messageId)).toEqual([42n, 88n]);
   });
 
   it('deletes a message through MessageService and marks it deleted locally', async () => {
