@@ -5,6 +5,7 @@ export default defineConfig({
     alias: { '@': '/src' },
   },
   test: {
+    include: ['src/**/*.test.{ts,tsx}'],
     environment: 'jsdom',
   },
 });

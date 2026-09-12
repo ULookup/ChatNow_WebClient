@@ -163,7 +163,7 @@ export function MessageInput() {
         handleNewMessage(createLocalFileMessage({
           conversationId: activeId,
           senderId: userId,
-          fileId: `preview-file-${Date.now()}`,
+          fileId: `preview-file-${crypto.randomUUID()}`,
           fileName: file.name,
           fileSize: BigInt(file.size),
           mimeType,

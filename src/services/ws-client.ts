@@ -1,12 +1,12 @@
 import { NotifyMessage, NotifyType } from '@/proto/push/notify';
 import { PresenceState } from '@/proto/presence/presence_service';
-import { getAccessToken } from '@/utils/token';
+import { getAccessToken, getDeviceId, getTokenHints } from '@/utils/token';
+import { websocketUrl } from './endpoints';
+import { ensureFreshAccessToken } from './client';
 import { useChatStore } from '@/stores/chatStore';
 import { useContactStore } from '@/stores/contactStore';
 import { usePresenceStore } from '@/stores/presenceStore';
 import { useAuthStore } from '@/stores/authStore';
-
-const WS_URL = 'ws://localhost:9001';
 
 /** Narrow Uint8Array for WebSocket.send() compatibility */
 function toWSSend(data: Uint8Array): Blob {
@@ -30,21 +30,48 @@ class WSClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectDelay = 1000;
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  private stopped = true;
+  private deviceId = '';
+  private connecting = false;
+  private generation = 0;
 
-  connect() {
+  async connect() {
+    if (this.connecting || (this.ws && this.ws.readyState < WebSocket.CLOSING)) return;
+    this.stopped = false;
+    this.connecting = true;
+    const generation = ++this.generation;
+    try {
+      const valid = await ensureFreshAccessToken();
+      if (this.stopped || generation !== this.generation) return;
+      if (!valid) { useAuthStore.getState().clearAuth(); return; }
+      this.openConnection();
+    } catch {
+      if (!this.stopped && generation === this.generation) this.scheduleReconnect();
+    } finally {
+      if (generation === this.generation) this.connecting = false;
+    }
+  }
+
+  private openConnection() {
+    if (this.ws && this.ws.readyState < WebSocket.CLOSING) return;
     const token = getAccessToken();
     if (!token) return;
-
-    this.ws = new WebSocket(WS_URL);
+    this.stopped = false;
+    this.deviceId = getTokenHints(token).did || getDeviceId();
+    this.ws = new WebSocket(websocketUrl());
+    const socket = this.ws;
     this.ws.binaryType = 'arraybuffer';
 
     this.ws.onopen = () => {
+      if (this.ws !== socket || this.stopped) return;
       this.sendAuth(token);
       this.startHeartbeat();
       this.reconnectDelay = 1000;
+      void this.catchUp();
     };
 
     this.ws.onmessage = (event) => {
+      if (this.ws !== socket || this.stopped) return;
       try {
         const buf = new Uint8Array(event.data as ArrayBuffer);
         const msg = NotifyMessage.fromBinary(buf);
@@ -57,13 +84,15 @@ class WSClient {
     this.ws.onerror = () => { /* handled by onclose */ };
 
     this.ws.onclose = () => {
+      if (this.ws !== socket) return;
+      this.ws = null;
       this.stopHeartbeat();
-      this.scheduleReconnect();
+      if (!this.stopped) this.scheduleReconnect();
     };
   }
 
   private sendAuth(token: string) {
-    const deviceId = 'web-' + crypto.randomUUID();
+    const deviceId = this.deviceId;
     const msg: NotifyMessage = {
       notifyType: NotifyType.CLIENT_AUTH,
       notifyRemarks: {
@@ -151,7 +180,6 @@ class WSClient {
       case NotifyType.FORCE_LOGOUT:
         useAuthStore.getState().clearAuth();
         this.disconnect();
-        window.location.hash = '#/login';
         break;
       case NotifyType.CONVERSATION_CREATE_NOTIFY:
         useChatStore.getState().loadConversations();
@@ -162,17 +190,19 @@ class WSClient {
     }
   }
 
-  private sendAck(data: { messageInfo?: { messageId: bigint; userSeq: bigint; conversationId: string } }) {
+  private sendAck(data: { messageInfo?: { messageId: bigint; userSeq: bigint; conversationId: string; seqId: bigint } }) {
+    if (!data.messageInfo) return;
     const ack: NotifyMessage = {
       notifyType: NotifyType.MSG_PUSH_ACK,
       notifyRemarks: {
         oneofKind: 'msgPushAck',
         msgPushAck: {
           userId: useAuthStore.getState().userId ?? '',
-          deviceId: 'web',
+          deviceId: this.deviceId,
           messageId: data.messageInfo?.messageId ?? 0n,
           userSeq: data.messageInfo?.userSeq ?? 0n,
           conversationId: data.messageInfo?.conversationId ?? '',
+          seqId: data.messageInfo.seqId,
         },
       },
     } as NotifyMessage;
@@ -188,14 +218,30 @@ class WSClient {
     }, this.reconnectDelay);
   }
 
+  private async catchUp() {
+    const state = useChatStore.getState();
+    const conversations = Object.entries(state.messagesByConv);
+    await Promise.allSettled([
+      state.loadConversations(),
+      ...conversations.map(([id, messages]) => {
+        const last = messages.reduce((seq, message) => message.seqId > seq ? message.seqId : seq, 0n);
+        return state.syncMessages(id, Number(last));
+      }),
+    ]);
+  }
+
   disconnect() {
+    this.generation++;
+    this.connecting = false;
+    this.stopped = true;
     this.stopHeartbeat();
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
-    this.ws?.close();
+    const socket = this.ws;
     this.ws = null;
+    socket?.close();
   }
 }
 

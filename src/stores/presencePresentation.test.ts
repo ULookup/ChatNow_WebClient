@@ -30,12 +30,12 @@ describe('presencePresentation', () => {
   });
 
   it('formats last active time relative to the current day', () => {
-    vi.setSystemTime(new Date('2026-05-21T12:00:00-07:00'));
+    vi.setSystemTime(new Date('2026-05-21T12:00:00'));
 
-    expect(formatLastActive(BigInt(new Date('2026-05-21T11:59:30-07:00').getTime()))).toBe('刚刚活跃');
-    expect(formatLastActive(BigInt(new Date('2026-05-21T11:45:00-07:00').getTime()))).toBe('15 分钟前活跃');
-    expect(formatLastActive(BigInt(new Date('2026-05-21T09:05:00-07:00').getTime()))).toBe('今天 09:05 活跃');
-    expect(formatLastActive(BigInt(new Date('2026-05-20T22:10:00-07:00').getTime()))).toBe('05/20 22:10 活跃');
+    expect(formatLastActive(BigInt(new Date('2026-05-21T11:59:30').getTime()))).toBe('刚刚活跃');
+    expect(formatLastActive(BigInt(new Date('2026-05-21T11:45:00').getTime()))).toBe('15 分钟前活跃');
+    expect(formatLastActive(BigInt(new Date('2026-05-21T09:05:00').getTime()))).toBe('今天 09:05 活跃');
+    expect(formatLastActive(BigInt(new Date('2026-05-20T22:10:00').getTime()))).toBe('05/20 22:10 活跃');
     expect(formatLastActive()).toBe('');
 
     vi.useRealTimers();

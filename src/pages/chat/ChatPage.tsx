@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { MainLayout } from '@/layouts/MainLayout';
 import { ConversationList } from './ConversationList';
 import { ChatWindow } from './ChatWindow';
@@ -15,6 +15,12 @@ export function ChatPage() {
   const isPreview = searchParams.get('preview') === '1';
   const loadConversations = useChatStore(s => s.loadConversations);
   const activeConvId = useChatStore(s => s.activeConversationId);
+  const openConversation = useChatStore(s => s.openConversation);
+  const { convId } = useParams();
+
+  useEffect(() => {
+    if (convId && !isPreview) void openConversation(convId);
+  }, [convId, isPreview, openConversation]);
 
   useEffect(() => {
     if (isPreview) {

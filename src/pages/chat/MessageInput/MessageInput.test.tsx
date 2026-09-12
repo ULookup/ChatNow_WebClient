@@ -4,7 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConversationStatus, ConversationType, MemberRole, type Conversation } from '@/proto/conversation/conversation_service';
 import type { FileInfo } from '@/proto/media/media_service';
 
-const uploadChatFile = vi.fn();
+import { useChatStore } from '@/stores/chatStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useUIStore } from '@/stores/uiStore';
+import { MessageInput } from './MessageInput';
+
+const { uploadChatFile } = vi.hoisted(() => ({ uploadChatFile: vi.fn() }));
 
 vi.mock('@/services/mediaUpload', () => ({
   uploadChatFile,
@@ -45,12 +50,7 @@ describe('MessageInput typing', () => {
     });
   });
 
-  afterEach(async () => {
-    const [{ useChatStore }, { useAuthStore }, { useUIStore }] = await Promise.all([
-      import('@/stores/chatStore'),
-      import('@/stores/authStore'),
-      import('@/stores/uiStore'),
-    ]);
+  afterEach(() => {
     useChatStore.setState({
       conversations: [],
       activeConversationId: null,
@@ -69,11 +69,6 @@ describe('MessageInput typing', () => {
   });
 
   it('sends typing state as the composer changes and clears it after send', async () => {
-    const [{ useChatStore }, { useAuthStore }, { MessageInput }] = await Promise.all([
-      import('@/stores/chatStore'),
-      import('@/stores/authStore'),
-      import('./MessageInput'),
-    ]);
     const sendTyping = vi.fn().mockResolvedValue(undefined);
     const sendMessage = vi.fn().mockResolvedValue(undefined);
     const originalSendTyping = useChatStore.getState().sendTyping;
@@ -109,10 +104,6 @@ describe('MessageInput typing', () => {
   });
 
   it('restores the active conversation draft into the composer', async () => {
-    const [{ useChatStore }, { MessageInput }] = await Promise.all([
-      import('@/stores/chatStore'),
-      import('./MessageInput'),
-    ]);
     useChatStore.setState({
       activeConversationId: 'conversation-1',
       conversations: [createConversation('这个方案稍后补一句')],
@@ -128,11 +119,6 @@ describe('MessageInput typing', () => {
   });
 
   it('saves draft changes and clears the backend draft after send', async () => {
-    const [{ useChatStore }, { useAuthStore }, { MessageInput }] = await Promise.all([
-      import('@/stores/chatStore'),
-      import('@/stores/authStore'),
-      import('./MessageInput'),
-    ]);
     const saveDraft = vi.fn().mockResolvedValue(undefined);
     const sendMessage = vi.fn().mockResolvedValue(undefined);
     const originalSaveDraft = useChatStore.getState().saveDraft;
@@ -170,11 +156,6 @@ describe('MessageInput typing', () => {
   });
 
   it('uploads a selected file and sends a file message outside preview mode', async () => {
-    const [{ useChatStore }, { useAuthStore }, { MessageInput }] = await Promise.all([
-      import('@/stores/chatStore'),
-      import('@/stores/authStore'),
-      import('./MessageInput'),
-    ]);
     const fileInfo: FileInfo = {
       fileId: 'file-1',
       fileName: 'brief.pdf',

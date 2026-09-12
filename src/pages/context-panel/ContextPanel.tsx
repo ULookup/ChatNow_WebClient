@@ -27,7 +27,7 @@ export function ContextPanel() {
         <span className={styles.title}>{getTitle(panelType)}</span>
         <IconButton icon="x" label="关闭详情面板" className={styles.close} onClick={closeRightPanel} />
       </div>
-      {panelType === 'group_info' && <ConversationSummary conv={conv} />}
+      {panelType === 'group_info' && <ConversationSummary key={`${conv.conversationId}:${conv.name}:${conv.description}`} conv={conv} />}
       {panelType === 'user_profile' && <UserProfile />}
       {panelType === 'pinned_messages' && <PinnedMessages />}
     </div>
@@ -48,12 +48,6 @@ function ConversationSummary({ conv }: { conv: Conversation }) {
   const closeRightPanel = useUIStore(s => s.closeRightPanel);
   const addToast = useUIStore(s => s.addToast);
   const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
-
-  useEffect(() => {
-    setName(conv.name || '');
-    setDescription(conv.description || '');
-    setAnnouncement('');
-  }, [conv.conversationId, conv.description, conv.name]);
 
   const handleSave = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

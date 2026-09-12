@@ -30,6 +30,10 @@ export interface NotifyClientAuth {
     lastUserSeq?: bigint;
 }
 /**
+ * Client ACKs a delivered push item. user_seq identifies the per-device
+ * unacked entry and message_id identifies the delivered item. seq_id is an
+ * optional conversation watermark; non-message pushes leave it as zero.
+ *
  * @generated from protobuf message chatnow.push.NotifyMsgPushAck
  */
 export interface NotifyMsgPushAck {
@@ -53,6 +57,10 @@ export interface NotifyMsgPushAck {
      * @generated from protobuf field: string conversation_id = 5
      */
     conversationId: string;
+    /**
+     * @generated from protobuf field: uint64 seq_id = 6
+     */
+    seqId: bigint;
 }
 /**
  * @generated from protobuf message chatnow.push.NotifyHeartbeat
@@ -495,7 +503,8 @@ class NotifyMsgPushAck$Type extends MessageType<NotifyMsgPushAck> {
             { no: 2, name: "device_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 3, name: "message_id", kind: "scalar", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ },
             { no: 4, name: "user_seq", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ },
-            { no: 5, name: "conversation_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+            { no: 5, name: "conversation_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 6, name: "seq_id", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ }
         ]);
     }
     create(value?: PartialMessage<NotifyMsgPushAck>): NotifyMsgPushAck {
@@ -505,6 +514,7 @@ class NotifyMsgPushAck$Type extends MessageType<NotifyMsgPushAck> {
         message.messageId = 0n;
         message.userSeq = 0n;
         message.conversationId = "";
+        message.seqId = 0n;
         if (value !== undefined)
             reflectionMergePartial<NotifyMsgPushAck>(this, message, value);
         return message;
@@ -528,6 +538,9 @@ class NotifyMsgPushAck$Type extends MessageType<NotifyMsgPushAck> {
                     break;
                 case /* string conversation_id */ 5:
                     message.conversationId = reader.string();
+                    break;
+                case /* uint64 seq_id */ 6:
+                    message.seqId = reader.uint64().toBigInt();
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -556,6 +569,9 @@ class NotifyMsgPushAck$Type extends MessageType<NotifyMsgPushAck> {
         /* string conversation_id = 5; */
         if (message.conversationId !== "")
             writer.tag(5, WireType.LengthDelimited).string(message.conversationId);
+        /* uint64 seq_id = 6; */
+        if (message.seqId !== 0n)
+            writer.tag(6, WireType.Varint).uint64(message.seqId);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROTO_DIR="../ChatNow/proto"
+PROTO_DIR="${CHATNOW_PROTO_DIR:-../ChatNow/proto}"
 OUT_DIR="src/proto"
 PLUGIN_PATH="./node_modules/@protobuf-ts/plugin/bin/protoc-gen-ts"
 

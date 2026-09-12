@@ -2,11 +2,16 @@ import { create } from 'zustand';
 import type { UserInfo } from '@/proto/common/types';
 import type { AuthTokens } from '@/proto/identity/identity_service';
 import { IdentityService } from '@/services/identity';
-import { setTokens, clearTokens, getAccessToken } from '@/utils/token';
+import { setTokens, clearTokens, getAccessToken, getRefreshToken } from '@/utils/token';
 import { wsClient } from '@/services/ws-client';
+import { useChatStore } from './chatStore';
+import { useContactStore } from './contactStore';
+import { usePresenceStore } from './presenceStore';
+import { useUIStore } from './uiStore';
 import { buildPhoneCodeCredential, buildUsernamePasswordCredential, normalizePhone } from '@/pages/auth/authCredential';
 
 interface AuthState {
+  sessionGeneration: number;
   isAuthenticated: boolean;
   userId: string | null;
   userInfo: UserInfo | null;
@@ -23,18 +28,25 @@ interface AuthState {
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
   getProfile: (userId?: string) => Promise<UserInfo>;
+  restoreSession: () => Promise<void>;
 }
 
+let restoration: Promise<void> | null = null;
+let sessionGeneration = 0;
+
 export const useAuthStore = create<AuthState>((set, get) => ({
+  sessionGeneration: 0,
   isAuthenticated: !!getAccessToken(),
   userId: null,
   userInfo: null,
   accessToken: getAccessToken(),
-  refreshToken: null,
+  refreshToken: getRefreshToken(),
 
   setAuth: (tokens: AuthTokens, user: UserInfo) => {
+    sessionGeneration++;
     setTokens(tokens.accessToken, tokens.refreshToken);
     set({
+      sessionGeneration,
       isAuthenticated: true,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
@@ -45,8 +57,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   clearAuth: () => {
+    sessionGeneration++;
     clearTokens();
     set({
+      sessionGeneration,
       isAuthenticated: false,
       userId: null,
       userInfo: null,
@@ -54,6 +68,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       refreshToken: null,
     });
     wsClient.disconnect();
+    useChatStore.setState(useChatStore.getInitialState(), true);
+    useContactStore.setState(useContactStore.getInitialState(), true);
+    usePresenceStore.setState(usePresenceStore.getInitialState(), true);
+    useUIStore.setState(useUIStore.getInitialState(), true);
   },
 
   login: async (account, password, deviceId, deviceName) => {
@@ -135,14 +153,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
-    await IdentityService.logout({
-      requestId: crypto.randomUUID(),
-    });
-    get().clearAuth();
+    try {
+      await IdentityService.logout({ requestId: crypto.randomUUID() });
+    } finally { get().clearAuth(); }
+  },
+
+  restoreSession: () => {
+    if (restoration) return restoration;
+    const generation = sessionGeneration;
+    restoration = (async () => {
+      if (!getAccessToken()) return;
+      const rsp = await IdentityService.getProfile({ requestId: crypto.randomUUID() });
+      if (generation !== sessionGeneration) return;
+      if (!rsp.header?.success || !rsp.userInfo) throw new Error('Unable to restore session');
+      set({ userInfo: rsp.userInfo, userId: rsp.userInfo.userId, accessToken: getAccessToken(), refreshToken: getRefreshToken() });
+      wsClient.connect();
+    })().finally(() => { restoration = null; });
+    return restoration;
   },
 
   refreshAuth: async () => {
-    const refresh = get().refreshToken;
+    const refresh = getRefreshToken();
     if (!refresh) throw new Error('No refresh token');
     const rsp = await IdentityService.refreshToken({
       requestId: crypto.randomUUID(),
@@ -167,7 +198,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     });
     if (rsp.header?.success && rsp.userInfo) {
       if (!userId) {
-        set({ userInfo: rsp.userInfo });
+        set({ userInfo: rsp.userInfo, userId: rsp.userInfo.userId });
       }
       return rsp.userInfo;
     }
