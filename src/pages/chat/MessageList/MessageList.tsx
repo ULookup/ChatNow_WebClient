@@ -6,8 +6,10 @@ import { IconButton } from '@/components/Icon/Icon';
 import { MessageBubble } from '../MessageBubble/MessageBubble';
 import { buildMessageTimeline, type MessageTimelineRow } from '../messageTimeline';
 import { getMessageSearchResults } from '../messageSearch';
-import { getMessageSenderLabel } from '../messagePresentation';
+import { getTypingLabel } from '../typingPresentation';
 import styles from './MessageList.module.css';
+
+const EMPTY_MESSAGES: Message[] = [];
 
 interface MessageListProps {
   searchQuery?: string;
@@ -20,7 +22,7 @@ export function MessageList({ searchQuery = '', searchMessages }: MessageListPro
     activeId ? s.lastReadSeq[activeId] : undefined,
   );
   const messages = useChatStore((s) =>
-    activeId ? (s.messagesByConv[activeId] ?? []) : [],
+    activeId ? (s.messagesByConv[activeId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES,
   );
   const typingUsersByConv = useChatStore((s) => s.typingUsersByConv);
   const updateReadAck = useChatStore((s) => s.updateReadAck);
@@ -151,14 +153,6 @@ export function MessageList({ searchQuery = '', searchMessages }: MessageListPro
       )}
     </div>
   );
-}
-
-export function getTypingLabel(activeId: string | null, typingUserIds: string[]): string | undefined {
-  if (typingUserIds.length > 0) {
-    if (typingUserIds.length === 1) return `${getMessageSenderLabel(typingUserIds[0])} 正在输入`;
-    return `${typingUserIds.slice(0, 2).map(getMessageSenderLabel).join('、')} 等正在输入`;
-  }
-  return activeId?.startsWith('preview-') ? 'Designer 正在输入' : undefined;
 }
 
 function TimelineRow({ row, searchQuery }: { row: MessageTimelineRow; searchQuery: string }) {

@@ -122,7 +122,7 @@ describe('ChatWindow', () => {
   });
 
   it('formats typing users for the message timeline', async () => {
-    const { getTypingLabel } = await import('./MessageList/MessageList');
+    const { getTypingLabel } = await import('./typingPresentation');
 
     expect(getTypingLabel('conversation-1', ['u-2'])).toBe('Designer 正在输入');
     expect(getTypingLabel('conversation-1', ['u-2', 'u-3'])).toBe('Designer、PM 等正在输入');

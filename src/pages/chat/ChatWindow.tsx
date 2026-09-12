@@ -8,12 +8,15 @@ import { MessageList } from './MessageList/MessageList';
 import { MessageInput } from './MessageInput/MessageInput';
 import { getMessageSearchResults } from './messageSearch';
 import styles from './ChatWindow.module.css';
+import type { Message } from '@/proto/message/message_types';
+
+const EMPTY_MESSAGES: Message[] = [];
 
 export function ChatWindow() {
   const [searchParams] = useSearchParams();
   const activeId = useChatStore(s => s.activeConversationId);
   const conv = useChatStore(s => s.conversations.find(c => c.conversationId === activeId));
-  const messages = useChatStore(s => activeId ? (s.messagesByConv[activeId] ?? []) : []);
+  const messages = useChatStore(s => activeId ? (s.messagesByConv[activeId] ?? EMPTY_MESSAGES) : EMPTY_MESSAGES);
   const messageSearch = useChatStore(s => activeId ? s.messageSearchesByConv[activeId] : undefined);
   const searchMessages = useChatStore(s => s.searchMessages);
   const clearConversation = useChatStore(s => s.clearConversation);
@@ -42,12 +45,16 @@ export function ChatWindow() {
 
   useEffect(() => {
     if (!messageSearchRequest) return;
+    // Bridge an external store search request into this panel's editable state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchOpen(true);
     setSearchQuery(messageSearchRequest.query);
     setActiveSearchIndex(0);
   }, [messageSearchRequest]);
 
   useEffect(() => {
+    // A changed result set invalidates the previous navigation index.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveSearchIndex(0);
   }, [effectiveSearchResults.query, effectiveSearchResults.count]);
 

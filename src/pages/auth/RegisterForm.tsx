@@ -29,8 +29,8 @@ export function RegisterForm({ onSuccess }: Props) {
         await register(account, password, nickname);
       }
       onSuccess();
-    } catch (err: any) {
-      setError(err.message ?? '注册失败');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '注册失败');
     } finally {
       setLoading(false);
     }
@@ -42,8 +42,8 @@ export function RegisterForm({ onSuccess }: Props) {
     try {
       const id = await sendPhoneVerifyCode(phone);
       setVerifyCodeId(id);
-    } catch (err: any) {
-      setError(err.message ?? '验证码发送失败');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '验证码发送失败');
     } finally {
       setSendingCode(false);
     }

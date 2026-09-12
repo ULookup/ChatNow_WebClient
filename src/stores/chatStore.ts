@@ -205,34 +205,43 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   syncMessages: async (convId, afterSeq) => {
-    const rsp = await MessageService.sync({
-      requestId: crypto.randomUUID(),
-      conversationId: convId,
-      afterSeq: BigInt(afterSeq),
-      limit: 50,
-    });
-    if (rsp.header?.success && rsp.messages) {
-      const existing = get().messagesByConv[convId] ?? [];
-      const merged = [...existing];
-      for (const msg of rsp.messages) {
-        if (!merged.find(m => m.messageId === msg.messageId)) {
-          merged.push(msg);
+    let cursor = BigInt(afterSeq);
+    for (let page = 0; page < 100; page++) {
+      const rsp = await MessageService.sync({
+        requestId: crypto.randomUUID(),
+        conversationId: convId,
+        afterSeq: cursor,
+        limit: 50,
+      });
+      if (rsp.header?.success && rsp.messages) {
+        const existing = get().messagesByConv[convId] ?? [];
+        const merged = [...existing];
+        for (const msg of rsp.messages) {
+          if (!merged.find(m => m.messageId === msg.messageId)) {
+            merged.push(msg);
+          }
         }
+        merged.sort((a, b) => {
+          const aSeq = a.seqId ?? 0n;
+          const bSeq = b.seqId ?? 0n;
+          if (aSeq < bSeq) return -1;
+          if (aSeq > bSeq) return 1;
+          return 0;
+        });
+        set({
+          messagesByConv: {
+            ...get().messagesByConv,
+            [convId]: merged,
+          },
+        });
       }
-      merged.sort((a, b) => {
-        const aSeq = a.seqId ?? 0n;
-        const bSeq = b.seqId ?? 0n;
-        if (aSeq < bSeq) return -1;
-        if (aSeq > bSeq) return 1;
-        return 0;
-      });
-      set({
-        messagesByConv: {
-          ...get().messagesByConv,
-          [convId]: merged,
-        },
-      });
+      if (!rsp.header?.success) throw new Error(rsp.header?.errorMessage || 'Message sync failed');
+      if (!rsp.hasMore) return;
+      const next = rsp.messages.reduce((seq, message) => message.seqId > seq ? message.seqId : seq, cursor);
+      if (next <= cursor) throw new Error('Message sync made no progress');
+      cursor = next;
     }
+    throw new Error('Message sync page limit reached; retry to continue');
   },
 
   fetchMessagesById: async (convId, messageIds) => {

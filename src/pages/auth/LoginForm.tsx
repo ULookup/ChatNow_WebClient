@@ -1,3 +1,4 @@
+import { getDeviceId } from '@/utils/token';
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import styles from './LoginForm.module.css';
@@ -21,12 +22,12 @@ export function LoginForm() {
     try {
       if (mode === 'phoneCode') {
         if (!verifyCodeId) throw new Error('请先获取验证码');
-        await loginWithPhoneCode(phone, verifyCodeId, verifyCode, crypto.randomUUID(), 'Web Browser');
+        await loginWithPhoneCode(phone, verifyCodeId, verifyCode, getDeviceId(), 'Web Browser');
       } else {
-        await login(account, password, crypto.randomUUID(), 'Web Browser');
+        await login(account, password, getDeviceId(), 'Web Browser');
       }
-    } catch (err: any) {
-      setError(err.message ?? '登录失败');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '登录失败');
     } finally {
       setLoading(false);
     }
@@ -38,8 +39,8 @@ export function LoginForm() {
     try {
       const id = await sendPhoneVerifyCode(phone);
       setVerifyCodeId(id);
-    } catch (err: any) {
-      setError(err.message ?? '验证码发送失败');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '验证码发送失败');
     } finally {
       setSendingCode(false);
     }
