@@ -42,7 +42,7 @@ test('two users log in, exchange messages, reload, and catch up after a disconne
       const protoPath = '/src/proto/conversation/conversation_service.ts';
       const { ConversationService } = await import(servicePath);
       const { ConversationType } = await import(protoPath);
-      const response = await ConversationService.create({ requestId: crypto.randomUUID(), type: ConversationType.GROUP, name: 'Core integration', memberIds: ids });
+      const response = await ConversationService.create({ requestId: crypto.randomUUID(), type: ConversationType.GROUP, name: 'Core integration', memberIds: ids.slice(1) });
       if (!response.header?.success) throw new Error(response.header?.errorMessage || 'Conversation setup failed');
       return response.conversation.conversationId as string;
     }, ids);
@@ -74,6 +74,10 @@ test('two users log in, exchange messages, reload, and catch up after a disconne
     await expect.poll(() => bobConnections).toBeGreaterThan(previousConnections);
     await expect(bob.getByText(missed, { exact: true }).last()).toBeVisible({ timeout: 35000 });
     expect(errors).toEqual([]);
+    await expect.poll(async () => bob.locator('[data-index]').evaluateAll(elements => {
+      const bounds = elements.map(element => element.getBoundingClientRect()).sort((a, b) => a.top - b.top);
+      return bounds.some((bound, index) => index > 0 && bound.top < bounds[index - 1].bottom - 1);
+    })).toBe(false);
     await alice.screenshot({ path: 'test-results/core-chat-alice.png', fullPage: true });
     await bob.screenshot({ path: 'test-results/core-chat-bob.png', fullPage: true });
   } finally {

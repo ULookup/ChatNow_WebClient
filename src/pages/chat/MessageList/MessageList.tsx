@@ -53,6 +53,7 @@ export function MessageList({ searchQuery = '', searchMessages }: MessageListPro
 
   const virtualizer = useVirtualizer({
     count: rows.length,
+    getItemKey: (index) => rows[index].id,
     getScrollElement: () => parentRef.current,
     estimateSize: (index) => estimateRowSize(rows[index]),
     overscan: 5,
